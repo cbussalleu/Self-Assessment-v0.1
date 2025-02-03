@@ -155,3 +155,27 @@ const AssessmentPage = () => {
           </div>
         </div>
       </section>
+ {/* CTA Section */}
+      <section className="bg-blue-900 text-white py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl font-westmount font-bold mb-6">
+              Ready to improve?
+            </h2>
+            <p className="text-xl mb-8 text-blue-100">
+              Start your assessment today and get actionable insights within minutes.
+            </p>
+            <StrategyzerButton 
+              onClick={() => window.open('TU_ENLACE_TYPEFORM', '_blank')}
+              className="mx-auto"
+            >
+              Begin Assessment
+            </StrategyzerButton>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default AssessmentPage;
