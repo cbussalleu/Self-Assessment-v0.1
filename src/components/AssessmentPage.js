@@ -34,3 +34,30 @@ const StrategyzerButton = ({ children, onClick, className = "" }) => {
     </Button>
   );
 };
+const AssessmentPage = () => {
+  return (
+    <div className="min-h-screen font-sans">
+      {/* Hero Section - Strategyzer style blue background */}
+      <section className="bg-blue-900 text-white py-24">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-5xl font-westmount font-bold mb-8 leading-tight">
+              Take control of your self-assessment and drive real results
+            </h1>
+            <p className="text-xl mb-12 text-blue-100 leading-relaxed">
+              An innovative assessment tool that helps you understand where you stand and guides you through the process of improvement, with outcome-oriented evaluation to produce quality insights.
+            </p>
+            <StrategyzerButton onClick={() => window.open('TU_ENLACE_TYPEFORM', '_blank')}>
+              Start Assessment
+            </StrategyzerButton>
+          </div>
+        </div>
+      </section>
+
+      {/* What's in it for you Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-westmount font-bold text-gray-900 mb-12">
+              What's in it for you
+            </h2>
