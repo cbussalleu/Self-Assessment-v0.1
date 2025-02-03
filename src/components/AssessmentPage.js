@@ -107,3 +107,51 @@ const AssessmentPage = () => {
           </div>
         </div>
       </section>
+{/* Assessment Process Section */}
+      <section className="bg-gray-50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-westmount font-bold text-gray-900 mb-12 text-center">
+              Our Assessment Process
+            </h2>
+            
+            <div className="grid gap-8 md:grid-cols-3">
+              <Card className="p-6 border-2 border-gray-100 hover:border-yellow-400 transition-colors">
+                <CardContent className="pt-6">
+                  <div className="rounded-full bg-yellow-400 w-12 h-12 flex items-center justify-center mb-4">
+                    <span className="font-westmount text-blue-900 text-xl font-bold">1</span>
+                  </div>
+                  <h3 className="text-xl font-westmount font-semibold mb-4">Self-Assessment</h3>
+                  <p className="text-gray-600">
+                    Complete our comprehensive questionnaire designed to evaluate key aspects of your organization.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="p-6 border-2 border-gray-100 hover:border-yellow-400 transition-colors">
+                <CardContent className="pt-6">
+                  <div className="rounded-full bg-yellow-400 w-12 h-12 flex items-center justify-center mb-4">
+                    <span className="font-westmount text-blue-900 text-xl font-bold">2</span>
+                  </div>
+                  <h3 className="text-xl font-westmount font-semibold mb-4">Analysis</h3>
+                  <p className="text-gray-600">
+                    Our system analyzes your responses using advanced algorithms and industry benchmarks.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="p-6 border-2 border-gray-100 hover:border-yellow-400 transition-colors">
+                <CardContent className="pt-6">
+                  <div className="rounded-full bg-yellow-400 w-12 h-12 flex items-center justify-center mb-4">
+                    <span className="font-westmount text-blue-900 text-xl font-bold">3</span>
+                  </div>
+                  <h3 className="text-xl font-westmount font-semibold mb-4">Results & Roadmap</h3>
+                  <p className="text-gray-600">
+                    Receive a detailed report with actionable insights and a clear improvement roadmap.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
