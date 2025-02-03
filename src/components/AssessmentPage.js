@@ -61,3 +61,49 @@ const AssessmentPage = () => {
             <h2 className="text-3xl font-westmount font-bold text-gray-900 mb-12">
               What's in it for you
             </h2>
+<div className="grid gap-8 md:grid-cols-2">
+              <div className="flex gap-6">
+                <div className="flex-shrink-0">
+                  <div className="rounded-full bg-yellow-400 w-12 h-12 flex items-center justify-center">
+                    <span className="font-westmount text-blue-900 text-xl font-bold">1</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-westmount font-semibold mb-3">Comprehensive Assessment</h3>
+                  <p className="text-gray-600">
+                    Get a clear picture of your current state through our proven assessment methodology.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-6">
+                <div className="flex-shrink-0">
+                  <div className="rounded-full bg-yellow-400 w-12 h-12 flex items-center justify-center">
+                    <span className="font-westmount text-blue-900 text-xl font-bold">2</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-westmount font-semibold mb-3">Data-Driven Insights</h3>
+                  <p className="text-gray-600">
+                    Receive detailed analytics and benchmarking against industry standards.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-6">
+                <div className="flex-shrink-0">
+                  <div className="rounded-full bg-yellow-400 w-12 h-12 flex items-center justify-center">
+                    <span className="font-westmount text-blue-900 text-xl font-bold">3</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-westmount font-semibold mb-3">Actionable Recommendations</h3>
+                  <p className="text-gray-600">
+                    Get personalized improvement suggestions based on your assessment results.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
