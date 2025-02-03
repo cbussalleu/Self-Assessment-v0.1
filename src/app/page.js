@@ -1,4 +1,4 @@
-import AssessmentPage from '../../components/AssessmentPage';
+import AssessmentPage from '../components/AssessmentPage';
 
 export default function Home() {
   return <AssessmentPage />;
