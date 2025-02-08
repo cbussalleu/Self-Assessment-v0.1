@@ -1,4 +1,3 @@
-// src/app/api/typeform-webhook/route.js
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
@@ -6,42 +5,69 @@ export async function POST(request) {
     // Obtener los datos del webhook de Typeform
     const data = await request.json();
     
-    // Extraer las respuestas
-    const answers = data.form_response.answers;
+    // Log para debugging
+    console.log('Webhook data received:', data);
     
-    // Aquí procesarías las respuestas y calcularías el score
-    // Por ahora solo las almacenaremos en memoria
-    // En un caso real, las guardarías en una base de datos
-    
+    // Extraer las respuestas relevantes
     const formResponse = {
-      response_id: data.form_response.token,
-      answers: answers.map(answer => ({
-        field_id: answer.field.id,
-        field_type: answer.field.type,
-        answer: answer.type === 'choice' ? answer.choice.label : answer.text
+      responseId: data.form_response.token,
+      answers: data.form_response.answers.map(answer => ({
+        questionId: answer.field.id,
+        type: answer.field.type,
+        answer: getAnswerValue(answer)
       }))
     };
 
-    // En un caso real, aquí guardarías en base de datos
-    console.log('Respuestas recibidas:', formResponse);
+    // Calcular score
+    const score = calculateScore(formResponse.answers);
+    
+    // En un caso real, aquí guardarías los resultados en una base de datos
+    // Por ahora solo los logueamos
+    console.log('Processed response:', {
+      ...formResponse,
+      score
+    });
 
-    // Responder al webhook
     return NextResponse.json({ 
-      success: true, 
-      message: 'Responses received successfully',
-      response_id: formResponse.response_id
+      success: true,
+      responseId: formResponse.responseId,
+      score
     });
 
   } catch (error) {
     console.error('Error processing webhook:', error);
     return NextResponse.json({ 
       success: false, 
-      error: 'Error processing webhook'
+      error: 'Error processing webhook request'
     }, { status: 500 });
   }
 }
 
-// Opcional: Endpoint GET para verificar el estado
+// Función auxiliar para extraer el valor de la respuesta según su tipo
+function getAnswerValue(answer) {
+  switch (answer.type) {
+    case 'choice':
+      return answer.choice.label;
+    case 'number':
+      return answer.number;
+    case 'text':
+      return answer.text;
+    default:
+      return null;
+  }
+}
+
+// Función para calcular el score
+function calculateScore(answers) {
+  // Aquí implementarías tu lógica de scoring
+  // Por ahora retornamos un valor de ejemplo
+  return 75;
+}
+
+// Endpoint de verificación
 export async function GET() {
-  return NextResponse.json({ status: 'Webhook endpoint is active' });
+  return NextResponse.json({ 
+    status: 'active',
+    message: 'Typeform webhook endpoint is ready to receive responses'
+  });
 }
