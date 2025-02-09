@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Removemos esta configuración que estaba causando problemas
+// export const config = {
+//   api: {
+//     bodyParser: false,
+//   },
+// };
 
 export async function POST(request) {
   try {
@@ -12,7 +13,11 @@ export async function POST(request) {
     const typeformSignature = request.headers.get('Typeform-Signature');
     
     // Log de headers para debugging
-    console.log('Headers received:', Object.fromEntries(request.headers));
+    const headers = {};
+    request.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    console.log('Headers received:', headers);
 
     const data = await request.json();
     console.log('Webhook data received:', data);
