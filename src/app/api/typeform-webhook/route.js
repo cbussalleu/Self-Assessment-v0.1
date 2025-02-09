@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function POST(request) {
   try {
-    // Verificar la autenticación
-    const typeformSignature = request.headers.get('typeform-signature');
+    // Verificar el header de Typeform
+    const typeformSignature = request.headers.get('Typeform-Signature');
     
-    if (!typeformSignature) {
-      return NextResponse.json({ 
-        error: 'No signature provided' 
-      }, { status: 401 });
-    }
+    // Log de headers para debugging
+    console.log('Headers received:', Object.fromEntries(request.headers));
 
-    // Resto del código...
     const data = await request.json();
     console.log('Webhook data received:', data);
     
@@ -23,7 +25,8 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({ 
-      error: 'Internal server error' 
+      error: 'Error processing webhook',
+      details: error.message
     }, { status: 500 });
   }
 }
