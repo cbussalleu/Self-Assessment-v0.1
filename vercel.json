@@ -1,12 +1,23 @@
 {
-  "routes": [
+  "rewrites": [
     {
       "source": "/api/typeform-webhook",
-      "destination": "/api/typeform-webhook",
-      "methods": ["POST", "GET"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*"
-      }
+      "destination": "/api/typeform-webhook"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/typeform-webhook",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,POST,OPTIONS"
+        }
+      ]
     }
   ]
 }
