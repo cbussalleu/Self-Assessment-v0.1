@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "source": "/api/typeform-webhook",
+      "destination": "/api/typeform-webhook",
+      "methods": ["POST", "GET"],
+      "headers": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    }
+  ]
+}
