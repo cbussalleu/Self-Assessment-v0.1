@@ -1,4 +1,8 @@
-// src/app/api/public/route.js
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export async function POST(request) {
   try {
     const data = await request.json();
@@ -6,18 +10,16 @@ export async function POST(request) {
     const formResponse = data.form_response;
     const responseId = formResponse.token;
     
-    const processedResults = processAnswers(formResponse);
-    const recommendations = getRecommendations(processedResults.score);
-    
+    // Procesamiento básico inicial
     const results = {
       responseId,
       timestamp: new Date().toISOString(),
-      ...processedResults,
-      recommendations
+      answers: formResponse.answers || [],
+      score: 75, // Por ahora un score fijo de ejemplo
+      level: "Proficient"
     };
 
-    // En un caso real, aquí guardaríamos en una base de datos
-    // Por ahora, podemos usar localStorage en el cliente
+    console.log('Processed results:', results);
 
     return NextResponse.json({ 
       success: true,
@@ -31,4 +33,11 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ 
+    status: 'active',
+    message: 'Webhook endpoint is ready'
+  });
 }
