@@ -8,22 +8,33 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Aquí podrías hacer una llamada a tu API para obtener los resultados
+    // Por ahora usaremos datos de ejemplo
     setResults({
-      score: 75,
-      level: "Proficient",
-      title: "Strong Foundation with Room to Grow",
-      description: "Your organization has established good practices in service design.",
-      recommendations: [
-        "Strengthen existing assessment processes",
-        "Implement more systematic evaluation methods",
-        "Develop more comprehensive feedback loops"
+      totalScore: 65,
+      masteryLevel: {
+        level: 4,
+        description: "Avanzado",
+        recommendations: "Alto desempeño, perfeccionar especialidades"
+      },
+      dimensionScores: [
+        75, // Capacidades Organizacionales
+        60, // Capacidades Interpersonales
+        70, // Capacidades Cognitivas
+        65, // Capacidades Técnicas
+        55, // Capacidades Emocionales
+        80  // Capacidades de Liderazgo
       ],
-      areas: [
-        { name: "Organizational Alignment", score: 80 },
-        { name: "Design Thinking", score: 70 },
-        { name: "Communication", score: 75 },
-        { name: "Leadership", score: 65 }
-      ]
+      recommendations: {
+        title: "Alto Desempeño",
+        description: "Estás muy cerca de la maestría. Enfócate en la innovación y el liderazgo.",
+        generalRecommendations: [
+          "Lidera proyectos complejos",
+          "Comparte conocimiento con otros profesionales",
+          "Explora metodologías de vanguardia",
+          "Desarrolla pensamiento estratégico"
+        ]
+      }
     });
     setLoading(false);
   }, []);
@@ -31,7 +42,7 @@ export default function ResultsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">Loading your results...</div>
+        <div className="text-2xl">Cargando resultados...</div>
       </div>
     );
   }
@@ -39,75 +50,77 @@ export default function ResultsPage() {
   if (!results) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">No results found</div>
+        <div className="text-2xl">No se encontraron resultados</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen font-westmount">
+    <div className="min-h-screen font-westmount bg-gray-50">
       {/* Hero Section */}
       <section className="bg-[#0026df] text-white py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-5xl font-bold mb-8">Your Assessment Results</h1>
-            <div className="text-8xl font-bold mb-4">{results.score}%</div>
-            <p className="text-2xl">{results.level}</p>
+            <h1 className="text-4xl font-bold mb-8">Resultados de tu Autoevaluación</h1>
+            <div className="text-8xl font-bold mb-4">{results.totalScore.toFixed(1)}%</div>
+            <p className="text-2xl">{results.masteryLevel.description}</p>
           </div>
         </div>
       </section>
 
-      {/* Results Content */}
+      {/* Dimensiones */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Overview Card */}
-            <Card className="mb-12 bg-[#FFD642]">
-              <CardContent className="p-8">
-                <h2 className="text-3xl font-bold text-[#0026df] mb-4">{results.title}</h2>
-                <p className="text-xl text-[#0026df]">{results.description}</p>
-              </CardContent>
-            </Card>
-
-            {/* Areas Assessment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-              {results.areas.map((area, index) => (
-                <Card key={index} className="p-6 border-2 border-gray-100">
-                  <CardContent>
-                    <h3 className="text-xl font-semibold mb-4">{area.name}</h3>
-                    <div className="flex items-center gap-4">
-                      <div className="w-full bg-gray-200 rounded-full h-4">
-                        <div 
-                          className="bg-[#0026df] h-4 rounded-full" 
-                          style={{ width: `${area.score}%` }}
-                        ></div>
-                      </div>
-                      <span className="font-bold">{area.score}%</span>
+          <h2 className="text-3xl font-bold text-center mb-12">Detalle por Dimensiones</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              "Capacidades Organizacionales",
+              "Capacidades Interpersonales", 
+              "Capacidades Cognitivas",
+              "Capacidades Técnicas", 
+              "Capacidades Emocionales",
+              "Capacidades de Liderazgo"
+            ].map((dimension, index) => (
+              <Card key={dimension} className="p-6">
+                <CardContent>
+                  <h3 className="text-xl font-semibold mb-4">{dimension}</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                      <div 
+                        className="bg-[#0026df] h-4 rounded-full" 
+                        style={{ width: `${results.dimensionScores[index]}%` }}
+                      ></div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Recommendations */}
-            <Card className="p-8">
-              <CardContent>
-                <h2 className="text-2xl font-bold mb-6">Key Recommendations</h2>
-                <div className="space-y-4">
-                  {results.recommendations.map((recommendation, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="rounded-full bg-[#0026df] w-8 h-8 flex items-center justify-center text-white">
-                          {index + 1}
-                        </div>
-                      </div>
-                      <p className="text-lg">{recommendation}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <span className="font-bold">{results.dimensionScores[index].toFixed(1)}%</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* Recomendaciones */}
+      <section className="bg-[#FFD642] py-20">
+        <div className="container mx-auto px-4">
+          <Card className="p-8">
+            <CardContent>
+              <h2 className="text-3xl font-bold mb-6 text-[#0026df]">{results.recommendations.title}</h2>
+              <p className="text-xl mb-8 text-[#0026df]">{results.recommendations.description}</p>
+              <div className="space-y-4">
+                {results.recommendations.generalRecommendations.map((rec, index) => (
+                  <div key={index} className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="rounded-full bg-[#0026df] w-8 h-8 flex items-center justify-center text-white">
+                        {index + 1}
+                      </div>
+                    </div>
+                    <p className="text-lg">{rec}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
     </div>
