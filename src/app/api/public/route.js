@@ -10,13 +10,17 @@ export async function POST(request) {
     const formResponse = data.form_response;
     const responseId = formResponse.token;
     
-    // Procesamiento básico inicial
+    // Nuevo método de procesamiento de respuestas
+    const processedResults = processAnswers(formResponse);
+    
+    // Generar recomendaciones basadas en el score
+    const recommendations = getRecommendations(processedResults.masteryLevel.level);
+
     const results = {
       responseId,
       timestamp: new Date().toISOString(),
-      answers: formResponse.answers || [],
-      score: 75, // Por ahora un score fijo de ejemplo
-      level: "Proficient"
+      ...processedResults,
+      recommendations
     };
 
     console.log('Processed results:', results);
@@ -33,6 +37,132 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+function processAnswers(formResponse) {
+  // Omitir la primera pregunta (introductoria)
+  const dimensionAnswers = formResponse.answers.slice(1);
+  
+  // Calcular el score de cada respuesta según su posición
+  const scoredAnswers = dimensionAnswers.map((answer, index) => {
+    const choices = formResponse.definition.fields[index + 1].choices;
+    const choiceIndex = choices.findIndex(choice => 
+      choice.label === answer.choice.label
+    );
+    return choiceIndex + 1; // +1 para que el primer índice sea 1
+  });
+
+  // Dividir respuestas en dimensiones (4 respuestas por dimensión)
+  const dimensionScores = [];
+  for (let i = 0; i < 6; i++) {
+    const dimensionAnswers = scoredAnswers.slice(i * 4, (i + 1) * 4);
+    const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
+    dimensionScores.push(dimensionScore);
+  }
+
+  // Calcular score total
+  const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / 6;
+
+  // Determinar nivel de madurez
+  const masteryLevel = determineMasteryLevel(totalScore * 20); // Convertir a porcentaje
+
+  return {
+    dimensionScores,
+    totalScore: totalScore * 20, // Convertir a porcentaje
+    masteryLevel,
+    rawScores: scoredAnswers
+  };
+}
+
+function determineMasteryLevel(score) {
+  if (score <= 20) {
+    return {
+      level: 1,
+      description: "Principiante",
+      recommendations: "Requiere desarrollo fundamental"
+    };
+  } else if (score <= 40) {
+    return {
+      level: 2, 
+      description: "En desarrollo",
+      recommendations: "Necesita fortalecer capacidades base"
+    };
+  } else if (score <= 60) {
+    return {
+      level: 3,
+      description: "Competente",
+      recommendations: "Buen potencial, enfoque en mejora continua"
+    };
+  } else if (score <= 80) {
+    return {
+      level: 4,
+      description: "Avanzado",
+      recommendations: "Alto desempeño, perfeccionar especialidades"
+    };
+  } else {
+    return {
+      level: 5,
+      description: "Experto",
+      recommendations: "Nivel de excelencia, liderar innovación"
+    };
+  }
+}
+
+function getRecommendations(level) {
+  const recommendationMap = {
+    1: {
+      title: "Desarrollo Inicial",
+      description: "Estás comenzando tu viaje en el diseño de servicios. Enfócate en aprender fundamentos y construir una base sólida.",
+      generalRecommendations: [
+        "Toma cursos introductorios de diseño de servicios",
+        "Busca mentores en el campo",
+        "Participa en talleres y webinars básicos",
+        "Lee libros fundamentales sobre diseño de servicios"
+      ]
+    },
+    2: {
+      title: "Crecimiento Temprano",
+      description: "Has comenzado a desarrollar tus capacidades. Es momento de fortalecer tus habilidades de manera sistemática.",
+      generalRecommendations: [
+        "Desarrolla un plan de aprendizaje estructurado",
+        "Busca proyectos que te permitan aplicar nuevas habilidades",
+        "Participa en comunidades de práctica",
+        "Invierte en cursos especializados"
+      ]
+    },
+    3: {
+      title: "Competencia Profesional",
+      description: "Tienes una base sólida. Ahora es el momento de profundizar y especializarte.",
+      generalRecommendations: [
+        "Identifica áreas de especialización",
+        "Busca proyectos desafiantes",
+        "Desarrolla un portafolio robusto",
+        "Considera certificaciones profesionales"
+      ]
+    },
+    4: {
+      title: "Alto Desempeño",
+      description: "Estás muy cerca de la maestría. Enfócate en la innovación y el liderazgo.",
+      generalRecommendations: [
+        "Lidera proyectos complejos",
+        "Comparte conocimiento con otros profesionales",
+        "Explora metodologías de vanguardia",
+        "Desarrolla pensamiento estratégico"
+      ]
+    },
+    5: {
+      title: "Excelencia en Diseño de Servicios",
+      description: "Eres un referente en diseño de servicios. Continúa innovando y liderando.",
+      generalRecommendations: [
+        "Desarrolla metodologías propias",
+        "Contribuye a la comunidad académica y profesional",
+        "Lidera transformaciones organizacionales",
+        "Mentoriza a nuevos profesionales"
+      ]
+    }
+  };
+
+  return recommendationMap[level];
 }
 
 export async function GET() {
