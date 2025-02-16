@@ -6,27 +6,27 @@ export const runtime = 'edge';
 export async function POST(request) {
   try {
     const data = await request.json();
-    console.log('Webhook data received:', data);
     
-    // Extraer las respuestas
-    const answers = data.form_response.answers;
-    const responseId = data.form_response.token;
+    const formResponse = data.form_response;
+    const responseId = formResponse.token;
     
-    // Procesar respuestas específicas del formulario
-    const processedResults = processAnswers(data.form_response);
+    // Procesar las respuestas y calcular score
+    const processedResults = processAnswers(formResponse);
     
-    // Log detallado de resultados
-    console.log('Processed results:', {
+    // Generar recomendaciones basadas en el score
+    const recommendations = getRecommendations(processedResults.score);
+    
+    const results = {
       responseId,
-      answers: processedResults.answerDetails,
-      score: processedResults.score,
-      recommendations: processedResults.recommendations
-    });
+      ...processedResults,
+      recommendations
+    };
+
+    console.log('Processed results:', results);
     
     return NextResponse.json({ 
       success: true,
-      responseId,
-      ...processedResults
+      ...results
     });
 
   } catch (error) {
@@ -39,47 +39,70 @@ export async function POST(request) {
 }
 
 function processAnswers(formResponse) {
-  const answers = formResponse.definition.fields.map((field, index) => {
-    const answer = formResponse.answers ? formResponse.answers[index] : null;
-    return {
-      question: field.title,
-      answer: answer ? answer.choice?.label : null,
-      fieldType: field.type
-    };
-  });
-
-  // Calcular score basado en las respuestas de multiple choice
-  let totalPoints = 0;
-  let maxPossible = 0;
-
-  answers.forEach(answer => {
-    if (answer.fieldType === 'multiple_choice' && answer.answer) {
-      // Asignar puntos basados en la posición de la respuesta
-      const choiceOptions = formResponse.definition.fields.find(
-        f => f.title === answer.question
-      )?.choices || [];
-      
-      const choiceIndex = choiceOptions.findIndex(
-        c => c.label === answer.answer
+  // Mapear las respuestas excluyendo preguntas de texto largo
+  const answers = formResponse.definition.fields
+    .filter(field => field.type === 'multiple_choice')
+    .map((field, index) => {
+      const choiceIndex = field.choices.findIndex(
+        choice => choice.label === formResponse.answers[index]?.choice?.label
       );
+      
+      return {
+        question: field.title,
+        answer: formResponse.answers[index]?.choice?.label,
+        score: choiceIndex + 1,
+        maxScore: field.choices.length
+      };
+    });
 
-      if (choiceIndex !== -1) {
-        totalPoints += choiceIndex + 1;
-        maxPossible += choiceOptions.length;
-      }
-    }
-  });
-
-  // Calcular score final (0-100)
-  const score = Math.round((totalPoints / maxPossible) * 100);
+  // Calcular score total
+  const totalScore = answers.reduce((sum, answer) => sum + answer.score, 0);
+  const maxPossibleScore = answers.reduce((sum, answer) => sum + answer.maxScore, 0);
+  const finalScore = Math.round((totalScore / maxPossibleScore) * 100);
 
   return {
-    score,
-    answerDetails: answers,
-    recommendations: getRecommendations(score)
+    answers,
+    score: finalScore,
+    scoreDetails: {
+      total: totalScore,
+      possible: maxPossibleScore,
+      percentage: finalScore
+    }
   };
 }
 
 function getRecommendations(score) {
-  // ... (mantener la función getRecommendations igual)
+  if (score <= 20) {
+    return {
+      level: 'Principiante',
+      title: 'Iniciando tu Viaje en Service Design',
+      description: 'Estás en las etapas iniciales de tu desarrollo en Service Design.',
+      recommendations: [
+        'Enfócate en aprender los conceptos básicos de Service Design',
+        'Participa en workshops y cursos introductorios',
+        'Busca mentores o guías en tu organización',
+        'Comienza con proyectos pequeños y bien definidos'
+      ]
+    };
+  } else if (score <= 40) {
+    return {
+      level: 'En Desarrollo',
+      title: 'Construyendo Bases Sólidas',
+      description: 'Estás desarrollando tus habilidades y conocimientos básicos.',
+      recommendations: [
+        'Profundiza en metodologías de diseño centrado en el usuario',
+        'Practica técnicas de facilitación y comunicación',
+        'Participa en más proyectos interdisciplinarios',
+        'Documenta y reflexiona sobre tus experiencias'
+      ]
+    };
+  }
+  // ... (añadir más niveles según sea necesario)
+}
+
+export async function GET() {
+  return NextResponse.json({ 
+    status: 'active',
+    message: 'Webhook endpoint is ready'
+  });
 }
