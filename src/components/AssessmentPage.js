@@ -49,9 +49,11 @@ const AssessmentPage = () => {
             <p className="text-xl mb-12 text-blue-100 leading-relaxed">
               An innovative assessment tool that helps you understand where you stand and guides you through the process of improvement, with outcome-oriented evaluation to produce quality insights.
             </p>
-            <StrategyzerButton onClick={() => window.open('TU_ENLACE_TYPEFORM', '_blank')}>
-              Start Assessment
-            </StrategyzerButton>
+            <StrategyzerButton 
+  onClick={() => window.open('https://christianbussalleu.typeform.com/to/MB0YptnS', '_blank')}
+>
+  Start Assessment
+</StrategyzerButton>
           </div>
         </div>
       </section>
@@ -168,11 +170,10 @@ const AssessmentPage = () => {
               Start your assessment today and get actionable insights within minutes.
             </p>
             <StrategyzerButton 
-              onClick={() => window.open('TU_ENLACE_TYPEFORM', '_blank')}
-              className="mx-auto"
-            >
-              Begin Assessment
-            </StrategyzerButton>
+  onClick={() => window.open('https://christianbussalleu.typeform.com/to/MB0YptnS', '_blank')}
+>
+  Start Assessment
+</StrategyzerButton>
           </div>
         </div>
       </section>
