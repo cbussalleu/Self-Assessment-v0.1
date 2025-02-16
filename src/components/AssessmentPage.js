@@ -50,7 +50,7 @@ const AssessmentPage = () => {
               An innovative assessment tool that helps you understand where you stand and guides you through the process of improvement, with outcome-oriented evaluation to produce quality insights.
             </p>
             <StrategyzerButton 
-  onClick={() => window.open('https://findasense.typeform.com/service-design', '_blank')}
+  onClick={() => window.location.href = '/assessment'}
 >
   Start Assessment
 </StrategyzerButton>
@@ -170,7 +170,7 @@ const AssessmentPage = () => {
               Start your assessment today and get actionable insights within minutes.
             </p>
             <StrategyzerButton 
-  onClick={() => window.open('https://findasense.typeform.com/service-design', '_blank')}
+  onClick={() => window.location.href = '/assessment'}
 >
   Start Assessment
 </StrategyzerButton>
