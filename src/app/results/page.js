@@ -8,35 +8,44 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Aquí podrías hacer una llamada a tu API para obtener los resultados
-    // Por ahora usaremos datos de ejemplo
-    setResults({
-      totalScore: 65,
-      masteryLevel: {
-        level: 4,
-        description: "Avanzado",
-        recommendations: "Alto desempeño, perfeccionar especialidades"
-      },
-      dimensionScores: [
-        75, // Capacidades Organizacionales
-        60, // Capacidades Interpersonales
-        70, // Capacidades Cognitivas
-        65, // Capacidades Técnicas
-        55, // Capacidades Emocionales
-        80  // Capacidades de Liderazgo
-      ],
-      recommendations: {
-        title: "Alto Desempeño",
-        description: "Estás muy cerca de la maestría. Enfócate en la innovación y el liderazgo.",
-        generalRecommendations: [
-          "Lidera proyectos complejos",
-          "Comparte conocimiento con otros profesionales",
-          "Explora metodologías de vanguardia",
-          "Desarrolla pensamiento estratégico"
-        ]
+    // En un escenario real, harías una llamada a tu API para obtener los resultados
+    const fetchResults = async () => {
+      try {
+        // Simular la obtención de resultados
+        setResults({
+          totalScore: 65,
+          masteryLevel: {
+            level: 4,
+            description: "Avanzado",
+            recommendations: "Alto desempeño, perfeccionar especialidades"
+          },
+          dimensionScores: [
+            75, // Capacidades Organizacionales
+            60, // Capacidades Interpersonales
+            70, // Capacidades Cognitivas
+            65, // Capacidades Técnicas
+            55, // Capacidades Emocionales
+            80  // Capacidades de Liderazgo
+          ],
+          recommendations: {
+            title: "Alto Desempeño",
+            description: "Estás muy cerca de la maestría. Enfócate en la innovación y el liderazgo.",
+            generalRecommendations: [
+              "Lidera proyectos complejos",
+              "Comparte conocimiento con otros profesionales",
+              "Explora metodologías de vanguardia",
+              "Desarrolla pensamiento estratégico"
+            ]
+          }
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching results:', error);
+        setLoading(false);
       }
-    });
-    setLoading(false);
+    };
+
+    fetchResults();
   }, []);
 
   if (loading) {
@@ -54,6 +63,15 @@ export default function ResultsPage() {
       </div>
     );
   }
+
+  const dimensionNames = [
+    'Capacidades Organizacionales',
+    'Capacidades Interpersonales', 
+    'Capacidades Cognitivas',
+    'Capacidades Técnicas', 
+    'Capacidades Emocionales',
+    'Capacidades de Liderazgo'
+  ];
 
   return (
     <div className="min-h-screen font-westmount bg-gray-50">
@@ -73,14 +91,7 @@ export default function ResultsPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Detalle por Dimensiones</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              "Capacidades Organizacionales",
-              "Capacidades Interpersonales", 
-              "Capacidades Cognitivas",
-              "Capacidades Técnicas", 
-              "Capacidades Emocionales",
-              "Capacidades de Liderazgo"
-            ].map((dimension, index) => (
+            {dimensionNames.map((dimension, index) => (
               <Card key={dimension} className="p-6">
                 <CardContent>
                   <h3 className="text-xl font-semibold mb-4">{dimension}</h3>
