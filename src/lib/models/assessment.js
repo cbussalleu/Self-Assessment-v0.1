@@ -2,24 +2,24 @@ import { sql } from '@vercel/postgres';
 
 export async function createAssessmentResult(results) {
   try {
-    const { 
-      responseId, 
-      totalScore, 
-      masteryLevel, 
+    const {
+      responseId,
+      totalScore,
+      masteryLevel,
       dimensionScores,
-      recommendations 
+      recommendations
     } = results;
 
     const query = `
-      INSERT INTO assessment_results 
+      INSERT INTO assessment_results
       (response_id, total_score, mastery_level, dimension_scores, recommendations)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
 
     const values = [
-      responseId, 
-      totalScore, 
+      responseId,
+      totalScore,
       JSON.stringify(masteryLevel),
       JSON.stringify(dimensionScores),
       JSON.stringify(recommendations)
@@ -36,9 +36,9 @@ export async function createAssessmentResult(results) {
 export async function getAssessmentResultByResponseId(responseId) {
   try {
     const query = `
-      SELECT * FROM assessment_results 
-      WHERE response_id = $1 
-      ORDER BY created_at DESC 
+      SELECT * FROM assessment_results
+      WHERE response_id = $1
+      ORDER BY created_at DESC
       LIMIT 1
     `;
 
