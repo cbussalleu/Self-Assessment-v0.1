@@ -41,10 +41,20 @@ export async function POST(request) {
 
 function processAnswers(formResponse) {
   // Omitir la primera pregunta (introductoria)
-  const dimensionAnswers = formResponse.answers.slice(1);
+  const answers = formResponse.answers.slice(1);
   
-  // Calcular el score de cada respuesta según su posición
-  const scoredAnswers = dimensionAnswers.map((answer, index) => {
+  // Mapear las dimensiones en el orden correcto
+  const dimensions = [
+    'Capacidades Organizacionales',
+    'Capacidades Interpersonales',
+    'Capacidades Cognitivas', 
+    'Capacidades Técnicas',
+    'Capacidades Emocionales',
+    'Capacidades de Liderazgo'
+  ];
+
+  // Calcular el score de cada respuesta
+  const scoredAnswers = answers.map((answer, index) => {
     const choices = formResponse.definition.fields[index + 1].choices;
     const choiceIndex = choices.findIndex(choice => 
       choice.label === answer.choice.label
@@ -53,22 +63,27 @@ function processAnswers(formResponse) {
   });
 
   // Dividir respuestas en dimensiones (4 respuestas por dimensión)
-  const dimensionScores = [];
-  for (let i = 0; i < 6; i++) {
-    const dimensionAnswers = scoredAnswers.slice(i * 4, (i + 1) * 4);
+  const dimensionScores = dimensions.map((dimension, dimIndex) => {
+    const start = dimIndex * 4;
+    const end = start + 4;
+    const dimensionAnswers = scoredAnswers.slice(start, end);
     const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
-    dimensionScores.push(dimensionScore);
-  }
+    return {
+      dimension,
+      score: dimensionScore * 20 // Convertir a porcentaje
+    };
+  });
 
   // Calcular score total
-  const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / 6;
+  const totalScore = dimensionScores.reduce((total, dim) => total + dim.score, 0) / 6;
 
   // Determinar nivel de madurez
-  const masteryLevel = determineMasteryLevel(totalScore * 20); // Convertir a porcentaje
+  const masteryLevel = determineMasteryLevel(totalScore);
 
   return {
-    dimensionScores,
-    totalScore: totalScore * 20, // Convertir a porcentaje
+    dimensionScores: dimensionScores.map(dim => dim.score),
+    dimensionDetails: dimensionScores,
+    totalScore,
     masteryLevel,
     rawScores: scoredAnswers
   };
