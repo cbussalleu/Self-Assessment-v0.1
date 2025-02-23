@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/postgres": "^0.7.2",
     "@typeform/embed-react": "^2.31.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
