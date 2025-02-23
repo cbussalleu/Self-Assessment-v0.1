@@ -48,7 +48,7 @@ function processAnswers(formResponse) {
   // Omitir la primera pregunta (introductoria)
   const dimensionAnswers = formResponse.answers.slice(1);
   
-  // Calcular el score de cada respuesta según su posición
+  // Mapear cada respuesta a un valor numérico (1 al 5)
   const scoredAnswers = dimensionAnswers.map((answer, index) => {
     const field = formResponse.definition.fields[index + 1];
     if (!field) {
@@ -61,16 +61,24 @@ function processAnswers(formResponse) {
     return choiceIndex + 1; // +1 para que el primer índice sea 1
   });
 
-  // Dividir respuestas en dimensiones (4 respuestas por dimensión)
+  // Calcular el score por variable (promedio de 5 respuestas)
+  const variableScores = [];
+  for (let i = 0; i < Math.ceil(scoredAnswers.length / 5); i++) {
+    const variableAnswers = scoredAnswers.slice(i * 5, (i + 1) * 5);
+    const variableScore = variableAnswers.reduce((a, b) => a + b, 0) / 5;
+    variableScores.push(variableScore);
+  }
+
+  // Calcular el score por dimensión (promedio de 4 variables)
   const dimensionScores = [];
-  for (let i = 0; i < 6; i++) {
-    const dimensionAnswers = scoredAnswers.slice(i * 4, (i + 1) * 4);
+  for (let i = 0; i < Math.ceil(variableScores.length / 4); i++) {
+    const dimensionAnswers = variableScores.slice(i * 4, (i + 1) * 4);
     const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
     dimensionScores.push(dimensionScore);
   }
 
-  // Calcular score total
-  const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / 6;
+  // Calcular el score total (promedio de 6 dimensiones)
+  const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / dimensionScores.length;
 
   // Determinar nivel de madurez
   const masteryLevel = determineMasteryLevel(totalScore * 20); // Convertir a porcentaje
