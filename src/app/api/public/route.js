@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createAssessmentResult } from '@/lib/models/assessment';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -10,24 +11,28 @@ export async function POST(request) {
     const formResponse = data.form_response;
     const responseId = formResponse.token;
     
-    // Nuevo método de procesamiento de respuestas
+    // Procesar las respuestas
     const processedResults = processAnswers(formResponse);
-    
-    // Generar recomendaciones basadas en el score
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
 
-    const results = {
+    // Preparar datos para la base de datos
+    const resultsToStore = {
       responseId,
-      timestamp: new Date().toISOString(),
-      ...processedResults,
+      totalScore: processedResults.totalScore,
+      masteryLevel: processedResults.masteryLevel,
+      dimensionScores: processedResults.dimensionScores,
       recommendations
     };
 
-    console.log('Processed results:', results);
+    // Guardar en la base de datos
+    await createAssessmentResult(resultsToStore);
 
+    // Enviar respuesta
     return NextResponse.json({ 
       success: true,
-      ...results
+      responseId,
+      ...processedResults,
+      recommendations
     });
 
   } catch (error) {
@@ -41,20 +46,10 @@ export async function POST(request) {
 
 function processAnswers(formResponse) {
   // Omitir la primera pregunta (introductoria)
-  const answers = formResponse.answers.slice(1);
+  const dimensionAnswers = formResponse.answers.slice(1);
   
-  // Mapear las dimensiones en el orden correcto
-  const dimensions = [
-    'Capacidades Organizacionales',
-    'Capacidades Interpersonales',
-    'Capacidades Cognitivas', 
-    'Capacidades Técnicas',
-    'Capacidades Emocionales',
-    'Capacidades de Liderazgo'
-  ];
-
-  // Calcular el score de cada respuesta
-  const scoredAnswers = answers.map((answer, index) => {
+  // Calcular el score de cada respuesta según su posición
+  const scoredAnswers = dimensionAnswers.map((answer, index) => {
     const choices = formResponse.definition.fields[index + 1].choices;
     const choiceIndex = choices.findIndex(choice => 
       choice.label === answer.choice.label
@@ -63,27 +58,22 @@ function processAnswers(formResponse) {
   });
 
   // Dividir respuestas en dimensiones (4 respuestas por dimensión)
-  const dimensionScores = dimensions.map((dimension, dimIndex) => {
-    const start = dimIndex * 4;
-    const end = start + 4;
-    const dimensionAnswers = scoredAnswers.slice(start, end);
+  const dimensionScores = [];
+  for (let i = 0; i < 6; i++) {
+    const dimensionAnswers = scoredAnswers.slice(i * 4, (i + 1) * 4);
     const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
-    return {
-      dimension,
-      score: dimensionScore * 20 // Convertir a porcentaje
-    };
-  });
+    dimensionScores.push(dimensionScore);
+  }
 
   // Calcular score total
-  const totalScore = dimensionScores.reduce((total, dim) => total + dim.score, 0) / 6;
+  const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / 6;
 
   // Determinar nivel de madurez
-  const masteryLevel = determineMasteryLevel(totalScore);
+  const masteryLevel = determineMasteryLevel(totalScore * 20); // Convertir a porcentaje
 
   return {
-    dimensionScores: dimensionScores.map(dim => dim.score),
-    dimensionDetails: dimensionScores,
-    totalScore,
+    dimensionScores,
+    totalScore: totalScore * 20, // Convertir a porcentaje
     masteryLevel,
     rawScores: scoredAnswers
   };
