@@ -8,14 +8,11 @@ export default function AssessmentForm() {
     <div className="min-h-screen">
       <div className="h-screen">
         <Widget 
-          id="MB0YptnS"
+          id="iYIBGmUK" // ID actualizado del Typeform
           style={{ width: '100%', height: '100%' }} 
           className="my-form"
           onSubmit={(event) => {
-            // Obtener el responseId del evento de submit
-            const responseId = event.responseId; // Asegúrate de que el evento contiene el responseId
-            
-            // Redirigir a la página de resultados con el responseId
+            const responseId = event.responseId;
             if (responseId) {
               window.location.href = `/results?responseId=${responseId}`;
             } else {
