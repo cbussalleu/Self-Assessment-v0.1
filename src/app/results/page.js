@@ -2,51 +2,46 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
+import { useSearchParams } from 'next/navigation';
 
 export default function ResultsPage() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // En un escenario real, harías una llamada a tu API para obtener los resultados
     const fetchResults = async () => {
       try {
-        // Simular la obtención de resultados
+        const responseId = searchParams.get('responseId');
+        
+        if (!responseId) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`/api/results/${responseId}`);
+        if (!response.ok) {
+          throw new Error('Error fetching results');
+        }
+
+        const data = await response.json();
+        
+        // Transformar los datos de la base de datos al formato que espera la UI
         setResults({
-          totalScore: 65,
-          masteryLevel: {
-            level: 4,
-            description: "Avanzado",
-            recommendations: "Alto desempeño, perfeccionar especialidades"
-          },
-          dimensionScores: [
-            75, // Capacidades Organizacionales
-            60, // Capacidades Interpersonales
-            70, // Capacidades Cognitivas
-            65, // Capacidades Técnicas
-            55, // Capacidades Emocionales
-            80  // Capacidades de Liderazgo
-          ],
-          recommendations: {
-            title: "Alto Desempeño",
-            description: "Estás muy cerca de la maestría. Enfócate en la innovación y el liderazgo.",
-            generalRecommendations: [
-              "Lidera proyectos complejos",
-              "Comparte conocimiento con otros profesionales",
-              "Explora metodologías de vanguardia",
-              "Desarrolla pensamiento estratégico"
-            ]
-          }
+          totalScore: data.total_score,
+          masteryLevel: JSON.parse(data.mastery_level),
+          dimensionScores: JSON.parse(data.dimension_scores),
+          recommendations: JSON.parse(data.recommendations)
         });
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching results:', error);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchResults();
-  }, []);
+  }, [searchParams]);
 
   if (loading) {
     return (
