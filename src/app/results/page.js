@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from 'next/navigation';
 
-export default function ResultsPage() {
+function ResultsPage() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
@@ -130,5 +130,13 @@ export default function ResultsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ResultsPageWrapper() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <ResultsPage />
+    </Suspense>
   );
 }
