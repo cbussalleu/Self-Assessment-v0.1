@@ -50,7 +50,11 @@ function processAnswers(formResponse) {
   
   // Calcular el score de cada respuesta según su posición
   const scoredAnswers = dimensionAnswers.map((answer, index) => {
-    const choices = formResponse.definition.fields[index + 1].choices;
+    const field = formResponse.definition.fields[index + 1];
+    if (!field) {
+      throw new Error(`Field definition for index ${index + 1} is undefined`);
+    }
+    const choices = field.choices;
     const choiceIndex = choices.findIndex(choice => 
       choice.label === answer.choice.label
     );
