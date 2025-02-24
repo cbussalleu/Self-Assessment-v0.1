@@ -13,7 +13,7 @@ export default function AssessmentForm() {
           className="my-form"
           onSubmit={(event) => {
             const response_Id = event.response_Id;
-            if (responseId) {
+            if (response_Id) {
               window.location.href = `/results?response_id=${response_Id}`;
             } else {
               window.location.href = '/results';
