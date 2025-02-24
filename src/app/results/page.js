@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from 'next/navigation';
 
@@ -12,7 +12,8 @@ function Results() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const responseId = searchParams.get('response_id');
+        console.log('Current URL Parameters:', searchParams.toString()); // Log para verificar parámetros de URL
+        const responseId = searchParams.get('responseId'); // Ajuste aquí
         
         if (!responseId) {
           console.log('No response ID found in URL');
@@ -141,7 +142,6 @@ function Results() {
   );
 }
 
-// Componente principal con Suspense
 export default function ResultsPage() {
   return (
     <Suspense fallback={
