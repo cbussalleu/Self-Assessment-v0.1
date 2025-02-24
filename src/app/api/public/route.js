@@ -3,22 +3,39 @@ import { getAssessmentResultByResponseId } from '@/lib/models/assessment';
 
 export async function GET(request) {
   try {
-    const response_Id = request.headers.get('response_id');
-
-    if (!response_Id) {
+    const responseId = request.headers.get('response-id') || request.headers.get('response_id');
+    console.log('GET request received with ID:', responseId);
+    
+    if (!responseId) {
+      console.log('No response ID provided in headers');
       return NextResponse.json({ 
         error: 'Missing response ID'
       }, { status: 400 });
     }
 
-    const result = await getAssessmentResultByResponseId(response_Id);
-
-    if (!result) {
-      return NextResponse.json({ 
-        error: 'No results found for the provided response ID'
-      }, { status: 404 });
-    }
-
+    // Para pruebas, devolver datos de prueba
+    // Eventualmente esto se reemplazaría con: const result = await getAssessmentResultByResponseId(responseId);
+    const result = {
+      totalScore: 85,
+      masteryLevel: {
+        level: 5,
+        description: "Experto",
+        recommendations: "Nivel de excelencia, liderar innovación"
+      },
+      dimensionScores: [90, 80, 85, 88, 82, 90],
+      recommendations: {
+        title: "Excelencia en Diseño de Servicios",
+        description: "Eres un referente en diseño de servicios. Continúa innovando y liderando.",
+        generalRecommendations: [
+          "Desarrolla metodologías propias",
+          "Contribuye a la comunidad académica y profesional",
+          "Lidera transformaciones organizacionales",
+          "Mentoriza a nuevos profesionales"
+        ]
+      }
+    };
+    
+    console.log('Returning result:', result);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching results:', error);
@@ -34,13 +51,13 @@ export async function POST(request) {
     console.log('Webhook received data:', data);
     
     const formResponse = data.form_response;
-    const response_Id = formResponse.token;
+    const responseId = formResponse.token;
 
     const processedResults = processAnswers(formResponse);
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
 
     const results = {
-      response_Id,
+      responseId,
       timestamp: new Date().toISOString(),
       ...processedResults,
       recommendations
@@ -48,7 +65,7 @@ export async function POST(request) {
 
     console.log('Processed results:', results);
 
-    const redirectUrl = `https://self-assessment-v0-1.vercel.app/results?response_id={form_response.token}`;
+    const redirectUrl = `https://self-assessment-v0-1.vercel.app/results?response_id=${responseId}`;
 
     return NextResponse.json({ 
       success: true,
