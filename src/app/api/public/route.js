@@ -11,15 +11,15 @@ export async function POST(request) {
     
     const formResponse = data.form_response;
     if (!formResponse) {
-  throw new Error('form_response is missing in the received data');
-}
-    const responseId = formResponse.token;
+      throw new Error('form_response is missing in the received data');
+    }
+    const response_id = formResponse.token;
 
     const processedResults = processAnswers(formResponse);
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
 
     const results = {
-      responseId,
+      response_id,
       timestamp: new Date().toISOString(),
       ...processedResults,
       recommendations
@@ -30,7 +30,7 @@ export async function POST(request) {
     // Guardar en base de datos
     await createAssessmentResult(results);
 
-    const redirectUrl = `https://self-assessment-v0-1.vercel.app/results?response_id=${responseId}`;
+    const redirectUrl = `https://self-assessment-v0-1.vercel.app/results?response_id=${response_id}`;
 
     return NextResponse.json({ 
       success: true,
@@ -49,10 +49,10 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
-    const responseId = request.headers.get('response-id') || request.headers.get('response_id');
-    console.log('GET request received with ID:', responseId);
+    const response_id = request.headers.get('response-id') || request.headers.get('response_id');
+    console.log('GET request received with ID:', response_id);
     
-    if (!responseId) {
+    if (!response_id) {
       console.log('No response ID provided in headers');
       return NextResponse.json({ 
         error: 'Missing response ID'
@@ -60,7 +60,7 @@ export async function GET(request) {
     }
 
     // Eventualmente esto se reemplazaría con: 
-    const result = await getAssessmentResultByResponseId(responseId);
+    const result = await getAssessmentResultByResponseId(response_id);
     
     console.log('Returning result:', result);
     return NextResponse.json(result);
