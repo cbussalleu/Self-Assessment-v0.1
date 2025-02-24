@@ -3,7 +3,7 @@ import { getAssessmentResultByResponseId } from '@/lib/models/assessment';
 
 export async function GET(request) {
   try {
-    const response_Id = request.headers.get('response-id');
+    const response_Id = request.headers.get('response_id');
 
     if (!response_Id) {
       return NextResponse.json({ 
