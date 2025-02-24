@@ -30,6 +30,7 @@ function Results() {
         });
 
         if (!response.ok) {
+          console.error('Error fetching results:', response.statusText);
           throw new Error('Error fetching results');
         }
 
@@ -56,12 +57,15 @@ function Results() {
   }
 
   if (!results) {
+    console.log('Results are null or undefined');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-2xl">No se encontraron resultados</div>
       </div>
     );
   }
+
+  console.log('Rendering results:', results);
 
   const dimensionNames = [
     'Capacidades Organizacionales',
