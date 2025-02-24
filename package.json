@@ -22,7 +22,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.1",
-    "dotenv": "^10.0.0"
+    "dotenv": "^10.0.0",
     "@swc/core": "^1.2.173",
     "@next/swc-android-arm-eabi": "14.1.0",
     "@next/swc-android-arm64": "14.1.0",
