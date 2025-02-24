@@ -61,6 +61,14 @@ if (!choices) {
 const choiceIndex = choices.findIndex(choice => 
   choice.label === answer.choice.label
 );
+    const choices = field.choices;
+console.log('Choices:', choices);
+if (!choices) {
+  throw new Error(`Choices for field index ${index + 1} are undefined`);
+}
+const choiceIndex = choices.findIndex(choice => 
+  choice.label === answer.choice.label
+);
     return choiceIndex + 1; // +1 para que el primer índice sea 1
   });
 
