@@ -10,6 +10,9 @@ export async function POST(request) {
     console.log('Webhook received data:', data);
     
     const formResponse = data.form_response;
+    if (!formResponse) {
+  throw new Error('form_response is missing in the received data');
+}
     const responseId = formResponse.token;
 
     const processedResults = processAnswers(formResponse);
@@ -71,6 +74,17 @@ export async function GET(request) {
 }
 
 // Funciones de procesamiento igual que en versiones anteriores
-function processAnswers(formResponse) { /* ... */ }
+function processAnswers(formResponse) {
+  // Lógica de procesamiento de respuestas
+  return {
+    masteryLevel: {
+      level: 'beginner' // Ejemplo de nivel de maestría
+    },
+    // Otros resultados procesados
+  };
+}
 function determineMasteryLevel(score) { /* ... */ }
-function getRecommendations(level) { /* ... */ }
+function getRecommendations(level) {
+  // Lógica para obtener recomendaciones basadas en el nivel
+  return ['Recommendation 1', 'Recommendation 2'];
+}
