@@ -3,12 +3,14 @@ import { sql } from '@vercel/postgres';
 export async function createAssessmentResult(results) {
   try {
     const {
-      responseId,
+      response_id, // Cambiar a responseId
       totalScore,
       masteryLevel,
       dimensionScores,
       recommendations
     } = results;
+
+    const responseId = response_id; // Agregar esta línea para asignar response_id a responseId
 
     if (!responseId) {
       throw new Error('Response ID is required');
