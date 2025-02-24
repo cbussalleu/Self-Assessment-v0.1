@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from 'next/navigation';
 
-export default function ResultsPage() {
+// Componente que maneja los resultados
+function Results() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
@@ -12,7 +13,6 @@ export default function ResultsPage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        // Obtener el token de la URL
         const responseId = searchParams.get('response_id');
         
         if (!responseId) {
@@ -23,7 +23,6 @@ export default function ResultsPage() {
 
         console.log('Response ID:', responseId);
         
-        // Obtener los resultados del webhook
         const response = await fetch(`/api/public`, {
           method: 'GET',
           headers: {
@@ -136,5 +135,18 @@ export default function ResultsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+// Componente principal con Suspense
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-2xl">Cargando...</div>
+      </div>
+    }>
+      <Results />
+    </Suspense>
   );
 }
