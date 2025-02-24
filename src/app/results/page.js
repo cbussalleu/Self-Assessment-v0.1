@@ -13,20 +13,20 @@ function Results() {
     const fetchResults = async () => {
       try {
         console.log('Current URL Parameters:', searchParams.toString()); // Log para verificar parámetros de URL
-        const responseId = searchParams.get('response_id'); // Ajuste aquí
+        const response_Id = searchParams.get('response_id'); // Ajuste aquí
         
-        if (!responseId) {
+        if (!response_Id) {
           console.log('No response ID found in URL');
           setLoading(false);
           return;
         }
 
-        console.log('Response ID:', responseId);
+        console.log('Response ID:', response_Id);
         
         const response = await fetch(`/api/public`, {
           method: 'GET',
           headers: {
-            'response-id': responseId
+            'response_id': response_Id
           }
         });
 
