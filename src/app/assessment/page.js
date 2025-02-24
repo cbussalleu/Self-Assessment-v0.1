@@ -14,14 +14,14 @@ export default function AssessmentForm() {
             console.log('Typeform submission event:', event);
             
             // Usar token o response_id, con múltiples fallbacks
-            const responseId = 
+            const response_id = 
               event.response_id || 
               event.token || 
               event.responseId;
 
-            if (responseId) {
-              console.log('Redirecting with response ID:', responseId);
-              window.location.href = `/results?response_id=${responseId}`;
+            if (response_id) {
+              console.log('Redirecting with response ID:', response_id);
+              window.location.href = `/results?response_id=${response_id}`;
             } else {
               console.warn('No response ID found in submission event');
               window.location.href = '/results';
