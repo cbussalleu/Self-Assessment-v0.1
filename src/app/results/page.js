@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from 'next/navigation';
 
-function ResultsPage() {
+export default function ResultsPage() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
@@ -12,29 +12,35 @@ function ResultsPage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const responseId = searchParams.get('responseId');
+        // Obtener el token de la URL
+        const responseId = searchParams.get('response_id');
         
         if (!responseId) {
+          console.log('No response ID found in URL');
           setLoading(false);
           return;
         }
 
-        const response = await fetch(`/api/results/${responseId}`);
+        console.log('Response ID:', responseId);
+        
+        // Obtener los resultados del webhook
+        const response = await fetch(`/api/public`, {
+          method: 'GET',
+          headers: {
+            'response-id': responseId
+          }
+        });
+
         if (!response.ok) {
           throw new Error('Error fetching results');
         }
 
         const data = await response.json();
+        console.log('Results data:', data);
         
-        // Transformar los datos de la base de datos al formato que espera la UI
-        setResults({
-          totalScore: data.total_score,
-          masteryLevel: JSON.parse(data.mastery_level),
-          dimensionScores: JSON.parse(data.dimension_scores),
-          recommendations: JSON.parse(data.recommendations)
-        });
+        setResults(data);
       } catch (error) {
-        console.error('Error fetching results:', error);
+        console.error('Error:', error);
       } finally {
         setLoading(false);
       }
@@ -130,13 +136,5 @@ function ResultsPage() {
         </div>
       </section>
     </div>
-  );
-}
-
-export default function ResultsPageWrapper() {
-  return (
-    <Suspense fallback={<div>Cargando...</div>}>
-      <ResultsPage />
-    </Suspense>
   );
 }
