@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react'; // Agrega Suspense aquí
+import React, { Suspense, useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from 'next/navigation';
 
@@ -13,7 +13,7 @@ function Results() {
     const fetchResults = async () => {
       try {
         console.log('Current URL Parameters:', searchParams.toString()); // Log para verificar parámetros de URL
-        const responseId = searchParams.get('responseId'); // Ajuste aquí
+        const responseId = searchParams.get('response_id'); // Ajuste aquí
         
         if (!responseId) {
           console.log('No response ID found in URL');
