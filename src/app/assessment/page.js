@@ -14,7 +14,7 @@ export default function AssessmentForm() {
           onSubmit={(event) => {
             const responseId = event.responseId;
             if (responseId) {
-              window.location.href = `/results?responseId=${responseId}`;
+              window.location.href = `/results?response_id=${responseId}`;
             } else {
               window.location.href = '/results';
             }
