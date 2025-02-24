@@ -40,7 +40,7 @@ export async function POST(request) {
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
 
     const results = {
-      responseId,
+      response_Id,
       timestamp: new Date().toISOString(),
       ...processedResults,
       recommendations
