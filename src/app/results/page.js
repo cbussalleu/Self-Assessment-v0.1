@@ -1,151 +1,210 @@
-'use client';
+import { NextResponse } from 'next/server';
+import { getAssessmentResultByResponseId } from '@/lib/models/assessment';
 
-import React, { Suspense, useEffect, useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { useSearchParams } from 'next/navigation';
+export async function GET(request) {
+  try {
+    const responseId = request.headers.get('response-id');
 
-function Results() {
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const searchParams = useSearchParams();
+    if (!responseId) {
+      return NextResponse.json({ 
+        error: 'Missing response ID'
+      }, { status: 400 });
+    }
 
-  useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        const responseId = searchParams.get('response_id');
-        
-        if (!responseId) {
-          console.log('No response ID found in URL');
-          setLoading(false);
-          return;
-        }
+    const result = await getAssessmentResultByResponseId(responseId);
 
-        console.log('Response ID:', responseId);
-        
-        const response = await fetch(`/api/public`, {
-          method: 'GET',
-          headers: {
-            'response-id': responseId
-          }
-        });
+    if (!result) {
+      return NextResponse.json({ 
+        error: 'No results found for the provided response ID'
+      }, { status: 404 });
+    }
 
-        if (!response.ok) {
-          throw new Error('Error fetching results');
-        }
-
-        const data = await response.json();
-        console.log('Results data:', data);
-        
-        setResults(data);
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResults();
-  }, [searchParams]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">Cargando resultados...</div>
-      </div>
-    );
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error fetching results:', error);
+    return NextResponse.json({ 
+      error: 'Error fetching results'
+    }, { status: 500 });
   }
-
-  if (!results) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">No se encontraron resultados</div>
-      </div>
-    );
-  }
-
-  const dimensionNames = [
-    'Capacidades Organizacionales',
-    'Capacidades Interpersonales', 
-    'Capacidades Cognitivas',
-    'Capacidades Técnicas', 
-    'Capacidades Emocionales',
-    'Capacidades de Liderazgo'
-  ];
-
-  return (
-    <div className="min-h-screen font-westmount bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-[#0026df] text-white py-24">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl font-bold mb-8">Resultados de tu Autoevaluación</h1>
-            <div className="text-8xl font-bold mb-4">{results.totalScore.toFixed(1)}%</div>
-            <p className="text-2xl">{results.masteryLevel.description}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Dimensiones */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Detalle por Dimensiones</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {dimensionNames.map((dimension, index) => (
-              <Card key={dimension} className="p-6">
-                <CardContent>
-                  <h3 className="text-xl font-semibold mb-4">{dimension}</h3>
-                  <div className="flex items-center gap-4">
-                    <div className="w-full bg-gray-200 rounded-full h-4">
-                      <div 
-                        className="bg-[#0026df] h-4 rounded-full" 
-                        style={{ width: `${results.dimensionScores[index]}%` }}
-                      ></div>
-                    </div>
-                    <span className="font-bold">{results.dimensionScores[index].toFixed(1)}%</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Recomendaciones */}
-      <section className="bg-[#FFD642] py-20">
-        <div className="container mx-auto px-4">
-          <Card className="p-8">
-            <CardContent>
-              <h2 className="text-3xl font-bold mb-6 text-[#0026df]">{results.recommendations.title}</h2>
-              <p className="text-xl mb-8 text-[#0026df]">{results.recommendations.description}</p>
-              <div className="space-y-4">
-                {results.recommendations.generalRecommendations.map((rec, index) => (
-                  <div key={index} className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="rounded-full bg-[#0026df] w-8 h-8 flex items-center justify-center text-white">
-                        {index + 1}
-                      </div>
-                    </div>
-                    <p className="text-lg">{rec}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    </div>
-  );
 }
 
-// Componente principal con Suspense
-export default function ResultsPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">Cargando...</div>
-      </div>
-    }>
-      <Results />
-    </Suspense>
-  );
+export async function POST(request) {
+  try {
+    const data = await request.json();
+    console.log('Webhook received data:', data);
+    
+    const formResponse = data.form_response;
+    const responseId = formResponse.token;
+
+    // Procesar las respuestas
+    const processedResults = processAnswers(formResponse);
+    const recommendations = getRecommendations(processedResults.masteryLevel.level);
+
+    // Preparar resultados
+    const results = {
+      responseId,
+      timestamp: new Date().toISOString(),
+      ...processedResults,
+      recommendations
+    };
+
+    console.log('Processed results:', results);
+
+    // Incluir la URL de redirección con el responseId
+    const redirectUrl = `https://example.com/results?response_id=${responseId}`;
+
+    return NextResponse.json({ 
+      success: true,
+      redirectUrl,
+      ...results
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    return NextResponse.json({ 
+      error: 'Error processing webhook',
+      details: error.message
+    }, { status: 500 });
+  }
+}
+
+function processAnswers(formResponse) {
+  try {
+    const introQuestionIndex = formResponse.definition.fields.findIndex(
+      field => field.title.toLowerCase().includes('por qué') || 
+              field.title.toLowerCase().includes('why')
+    );
+
+    const fields = formResponse.definition.fields.filter((field, index) => 
+      index !== introQuestionIndex && 
+      field.type === 'multiple_choice'
+    );
+
+    const answers = formResponse.answers.filter((answer, index) => 
+      index !== introQuestionIndex && 
+      answer.type === 'choice'
+    );
+
+    console.log('Number of fields:', fields.length);
+    console.log('Number of answers:', answers.length);
+
+    const scoredAnswers = answers.map(answer => {
+      const field = fields.find(f => f.id === answer.field.id);
+      const choiceIndex = field.choices.findIndex(choice => 
+        choice.label === answer.choice.label
+      );
+      return choiceIndex + 1;
+    });
+
+    const dimensionScores = [];
+    for (let i = 0; i < 6; i++) {
+      const start = i * 4;
+      const dimensionAnswers = scoredAnswers.slice(start, start + 4);
+      const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
+      dimensionScores.push(dimensionScore * 20);
+    }
+
+    const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / 6;
+
+    return {
+      dimensionScores,
+      totalScore,
+      masteryLevel: determineMasteryLevel(totalScore),
+      rawScores: scoredAnswers
+    };
+  } catch (error) {
+    console.error('Error processing answers:', error);
+    throw new Error(`Error processing answers: ${error.message}`);
+  }
+}
+
+function determineMasteryLevel(score) {
+  if (score <= 20) {
+    return {
+      level: 1,
+      description: "Principiante",
+      recommendations: "Requiere desarrollo fundamental"
+    };
+  } else if (score <= 40) {
+    return {
+      level: 2, 
+      description: "En desarrollo",
+      recommendations: "Necesita fortalecer capacidades base"
+    };
+  } else if (score <= 60) {
+    return {
+      level: 3,
+      description: "Competente",
+      recommendations: "Buen potencial, enfoque en mejora continua"
+    };
+  } else if (score <= 80) {
+    return {
+      level: 4,
+      description: "Avanzado",
+      recommendations: "Alto desempeño, perfeccionar especialidades"
+    };
+  } else {
+    return {
+      level: 5,
+      description: "Experto",
+      recommendations: "Nivel de excelencia, liderar innovación"
+    };
+  }
+}
+
+function getRecommendations(level) {
+  const recommendationMap = {
+    1: {
+      title: "Desarrollo Inicial",
+      description: "Estás comenzando tu viaje en el diseño de servicios. Enfócate en aprender fundamentos y construir una base sólida.",
+      generalRecommendations: [
+        "Toma cursos introductorios de diseño de servicios",
+        "Busca mentores en el campo",
+        "Participa en talleres y webinars básicos",
+        "Lee libros fundamentales sobre diseño de servicios"
+      ]
+    },
+    2: {
+      title: "Crecimiento Temprano",
+      description: "Has comenzado a desarrollar tus capacidades. Es momento de fortalecer tus habilidades de manera sistemática.",
+      generalRecommendations: [
+        "Desarrolla un plan de aprendizaje estructurado",
+        "Busca proyectos que te permitan aplicar nuevas habilidades",
+        "Participa en comunidades de práctica",
+        "Invierte en cursos especializados"
+      ]
+    },
+    3: {
+      title: "Competencia Profesional",
+      description: "Tienes una base sólida. Ahora es el momento de profundizar y especializarte.",
+      generalRecommendations: [
+        "Identifica áreas de especialización",
+        "Busca proyectos desafiantes",
+        "Desarrolla un portafolio robusto",
+        "Considera certificaciones profesionales"
+      ]
+    },
+    4: {
+      title: "Alto Desempeño",
+      description: "Estás muy cerca de la maestría. Enfócate en la innovación y el liderazgo.",
+      generalRecommendations: [
+        "Lidera proyectos complejos",
+        "Comparte conocimiento con otros profesionales",
+        "Explora metodologías de vanguardia",
+        "Desarrolla pensamiento estratégico"
+      ]
+    },
+    5: {
+      title: "Excelencia en Diseño de Servicios",
+      description: "Eres un referente en diseño de servicios. Continúa innovando y liderando.",
+      generalRecommendations: [
+        "Desarrolla metodologías propias",
+        "Contribuye a la comunidad académica y profesional",
+        "Lidera transformaciones organizacionales",
+        "Mentoriza a nuevos profesionales"
+      ]
+    }
+  };
+
+  return recommendationMap[level];
 }
