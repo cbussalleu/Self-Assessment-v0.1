@@ -36,11 +36,9 @@ export async function POST(request) {
     const formResponse = data.form_response;
     const responseId = formResponse.token;
 
-    // Procesar las respuestas
     const processedResults = processAnswers(formResponse);
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
 
-    // Preparar resultados
     const results = {
       responseId,
       timestamp: new Date().toISOString(),
@@ -50,7 +48,6 @@ export async function POST(request) {
 
     console.log('Processed results:', results);
 
-    // Incluir la URL de redirección con el responseId
     const redirectUrl = `https://example.com/results?response_id=${responseId}`;
 
     return NextResponse.json({ 
