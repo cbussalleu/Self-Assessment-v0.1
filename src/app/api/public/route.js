@@ -25,8 +25,12 @@ export async function POST(request) {
 
     console.log('Processed results:', results);
 
+    // Incluir la URL de redirección con el responseId
+    const redirectUrl = `https://example.com/results?responseId=${responseId}`;
+
     return NextResponse.json({ 
       success: true,
+      redirectUrl,
       ...results
     });
 
