@@ -16,7 +16,7 @@ export async function POST(request) {
         throw new Error(`Field definition for index ${index} is undefined`);
       }
       if (!field.choices) {
-        throw new Error(`Choices for field index ${index} are undefined`);
+        console.warn(`Choices for field index ${index} are undefined`);
       }
     });
 
@@ -60,8 +60,10 @@ function processAnswers(formResponse) {
   // Mapear cada respuesta a un valor numérico (1 al 5)
   const scoredAnswers = dimensionAnswers.map((answer, index) => {
     const field = formResponse.definition.fields[index + 1];
-    const choices = field.choices;
-    const choiceIndex = choices.findIndex(choice => 
+    if (!field.choices) {
+      throw new Error(`Choices for field index ${index + 1} are undefined`);
+    }
+    const choiceIndex = field.choices.findIndex(choice => 
       choice.label === answer.choice.label
     );
     return choiceIndex + 1; // +1 para que el primer índice sea 1
