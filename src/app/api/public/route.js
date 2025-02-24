@@ -7,18 +7,10 @@ export const runtime = 'edge';
 export async function POST(request) {
   try {
     const data = await request.json();
+    console.log('Webhook received data:', data);
+    
     const formResponse = data.form_response;
     const responseId = formResponse.token;
-
-    // Validar existencia de fields y choices
-    formResponse.definition.fields.forEach((field, index) => {
-      if (!field) {
-        throw new Error(`Field definition for index ${index} is undefined`);
-      }
-      if (!field.choices) {
-        console.warn(`Choices for field index ${index} are undefined`);
-      }
-    });
 
     // Procesar las respuestas
     const processedResults = processAnswers(formResponse);
@@ -32,6 +24,8 @@ export async function POST(request) {
       dimensionScores: processedResults.dimensionScores,
       recommendations
     };
+
+    console.log('Storing in database:', resultsToStore);
 
     // Guardar en la base de datos
     await createAssessmentResult(resultsToStore);
@@ -54,49 +48,61 @@ export async function POST(request) {
 }
 
 function processAnswers(formResponse) {
-  // Omitir la primera pregunta (introductoria)
-  const dimensionAnswers = formResponse.answers.slice(1);
-
-  // Mapear cada respuesta a un valor numérico (1 al 5)
-  const scoredAnswers = dimensionAnswers.map((answer, index) => {
-    const field = formResponse.definition.fields[index + 1];
-    if (!field.choices) {
-      throw new Error(`Choices for field index ${index + 1} are undefined`);
-    }
-    const choiceIndex = field.choices.findIndex(choice => 
-      choice.label === answer.choice.label
+  try {
+    // Filtrar solo las preguntas de opción múltiple
+    const multipleChoiceFields = formResponse.definition.fields.filter(field => 
+      field && field.type === 'multiple_choice' && field.choices
     );
-    return choiceIndex + 1; // +1 para que el primer índice sea 1
-  });
 
-  // Calcular el score por variable (promedio de 5 respuestas)
-  const variableScores = [];
-  for (let i = 0; i < Math.ceil(scoredAnswers.length / 5); i++) {
-    const variableAnswers = scoredAnswers.slice(i * 5, (i + 1) * 5);
-    const variableScore = variableAnswers.reduce((a, b) => a + b, 0) / 5;
-    variableScores.push(variableScore);
+    const multipleChoiceAnswers = formResponse.answers.filter(answer => 
+      answer && answer.type === 'choice'
+    );
+
+    if (multipleChoiceAnswers.length !== 24) { // 24 = 6 dimensiones × 4 variables
+      console.warn(`Expected 24 multiple choice answers, got ${multipleChoiceAnswers.length}`);
+    }
+
+    // Calcular el score de cada respuesta
+    const scoredAnswers = multipleChoiceAnswers.map(answer => {
+      const field = multipleChoiceFields.find(f => f.id === answer.field.id);
+      if (!field || !field.choices) {
+        throw new Error(`Invalid field configuration for answer ${answer.field.id}`);
+      }
+      const choiceIndex = field.choices.findIndex(choice => 
+        choice.label === answer.choice.label
+      );
+      return choiceIndex + 1; // +1 para que el primer índice sea 1
+    });
+
+    // Calcular el score por variable (promedio de respuestas)
+    const variableScores = [];
+    for (let i = 0; i < Math.floor(scoredAnswers.length / 4); i++) {
+      const variableAnswers = scoredAnswers.slice(i * 4, (i + 1) * 4);
+      const variableScore = variableAnswers.reduce((a, b) => a + b, 0) / variableAnswers.length;
+      variableScores.push(variableScore);
+    }
+
+    // Calcular el score por dimensión (promedio de 4 variables)
+    const dimensionScores = [];
+    for (let i = 0; i < 6; i++) {
+      const dimensionVariables = variableScores.slice(i * 4, (i + 1) * 4);
+      const dimensionScore = dimensionVariables.reduce((a, b) => a + b, 0) / 4;
+      dimensionScores.push(dimensionScore * 20); // Convertir a porcentaje
+    }
+
+    // Calcular score total
+    const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / dimensionScores.length;
+
+    return {
+      dimensionScores,
+      totalScore,
+      masteryLevel: determineMasteryLevel(totalScore),
+      rawScores: scoredAnswers
+    };
+  } catch (error) {
+    console.error('Error processing answers:', error);
+    throw new Error(`Error processing answers: ${error.message}`);
   }
-
-  // Calcular el score por dimensión (promedio de 4 variables)
-  const dimensionScores = [];
-  for (let i = 0; i < Math.ceil(variableScores.length / 4); i++) {
-    const dimensionAnswers = variableScores.slice(i * 4, (i + 1) * 4);
-    const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
-    dimensionScores.push(dimensionScore);
-  }
-
-  // Calcular el score total (promedio de 6 dimensiones)
-  const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / dimensionScores.length;
-
-  // Determinar nivel de madurez
-  const masteryLevel = determineMasteryLevel(totalScore * 20); // Convertir a porcentaje
-
-  return {
-    dimensionScores,
-    totalScore: totalScore * 20, // Convertir a porcentaje
-    masteryLevel,
-    rawScores: scoredAnswers
-  };
 }
 
 function determineMasteryLevel(score) {
