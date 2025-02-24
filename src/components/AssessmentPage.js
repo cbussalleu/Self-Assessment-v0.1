@@ -1,6 +1,5 @@
-require('dotenv').config();
-
 'use client';
+require('dotenv').config();
 
 import React from 'react';
 import { Button } from "../components/ui/button";
