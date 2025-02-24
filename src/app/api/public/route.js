@@ -55,9 +55,12 @@ function processAnswers(formResponse) {
       throw new Error(`Field definition for index ${index + 1} is undefined`);
     }
     const choices = field.choices;
-    const choiceIndex = choices.findIndex(choice => 
-      choice.label === answer.choice.label
-    );
+if (!choices) {
+  throw new Error(`Choices for field index ${index + 1} are undefined`);
+}
+const choiceIndex = choices.findIndex(choice => 
+  choice.label === answer.choice.label
+);
     return choiceIndex + 1; // +1 para que el primer índice sea 1
   });
 
