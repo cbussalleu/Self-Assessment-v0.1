@@ -1,7 +1,32 @@
 import { NextResponse } from 'next/server';
+import { getAssessmentResultByResponseId } from '@/lib/models/assessment';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
+export async function GET(request) {
+  try {
+    const responseId = request.headers.get('response-id');
+
+    if (!responseId) {
+      return NextResponse.json({ 
+        error: 'Missing response ID'
+      }, { status: 400 });
+    }
+
+    const result = await getAssessmentResultByResponseId(responseId);
+
+    if (!result) {
+      return NextResponse.json({ 
+        error: 'No results found for the provided response ID'
+      }, { status: 404 });
+    }
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error fetching results:', error);
+    return NextResponse.json({ 
+      error: 'Error fetching results'
+    }, { status: 500 });
+  }
+}
 
 export async function POST(request) {
   try {
@@ -26,7 +51,7 @@ export async function POST(request) {
     console.log('Processed results:', results);
 
     // Incluir la URL de redirección con el responseId
-    const redirectUrl = `https://example.com/results?responseId=${responseId}`;
+    const redirectUrl = `https://example.com/results?response_id=${responseId}`;
 
     return NextResponse.json({ 
       success: true,
@@ -45,13 +70,11 @@ export async function POST(request) {
 
 function processAnswers(formResponse) {
   try {
-    // Encontrar el índice de la pregunta introductoria
     const introQuestionIndex = formResponse.definition.fields.findIndex(
       field => field.title.toLowerCase().includes('por qué') || 
               field.title.toLowerCase().includes('why')
     );
 
-    // Filtrar los campos y respuestas excluyendo la pregunta introductoria
     const fields = formResponse.definition.fields.filter((field, index) => 
       index !== introQuestionIndex && 
       field.type === 'multiple_choice'
@@ -65,25 +88,22 @@ function processAnswers(formResponse) {
     console.log('Number of fields:', fields.length);
     console.log('Number of answers:', answers.length);
 
-    // Calcular el score de cada respuesta
     const scoredAnswers = answers.map(answer => {
       const field = fields.find(f => f.id === answer.field.id);
       const choiceIndex = field.choices.findIndex(choice => 
         choice.label === answer.choice.label
       );
-      return choiceIndex + 1; // +1 para que el primer índice sea 1
+      return choiceIndex + 1;
     });
 
-    // Calcular scores por dimensión (4 preguntas por dimensión)
     const dimensionScores = [];
     for (let i = 0; i < 6; i++) {
       const start = i * 4;
       const dimensionAnswers = scoredAnswers.slice(start, start + 4);
       const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
-      dimensionScores.push(dimensionScore * 20); // Convertir a porcentaje
+      dimensionScores.push(dimensionScore * 20);
     }
 
-    // Calcular score total
     const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / 6;
 
     return {
@@ -187,11 +207,4 @@ function getRecommendations(level) {
   };
 
   return recommendationMap[level];
-}
-
-export async function GET() {
-  return NextResponse.json({ 
-    status: 'active',
-    message: 'Webhook endpoint is ready'
-  });
 }
