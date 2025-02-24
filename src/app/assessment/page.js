@@ -12,9 +12,9 @@ export default function AssessmentForm() {
           style={{ width: '100%', height: '100%' }} 
           className="my-form"
           onSubmit={(event) => {
-            const responseId = event.responseId;
+            const response_Id = event.response_Id;
             if (responseId) {
-              window.location.href = `/results?response_id=${responseId}`;
+              window.location.href = `/results?response_id=${response_Id}`;
             } else {
               window.location.href = '/results';
             }
