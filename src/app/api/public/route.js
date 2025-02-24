@@ -3,15 +3,15 @@ import { getAssessmentResultByResponseId } from '@/lib/models/assessment';
 
 export async function GET(request) {
   try {
-    const responseId = request.headers.get('response-id');
+    const response_Id = request.headers.get('response-id');
 
-    if (!responseId) {
+    if (!response_Id) {
       return NextResponse.json({ 
         error: 'Missing response ID'
       }, { status: 400 });
     }
 
-    const result = await getAssessmentResultByResponseId(responseId);
+    const result = await getAssessmentResultByResponseId(response_Id);
 
     if (!result) {
       return NextResponse.json({ 
@@ -34,7 +34,7 @@ export async function POST(request) {
     console.log('Webhook received data:', data);
     
     const formResponse = data.form_response;
-    const responseId = formResponse.token;
+    const response_Id = formResponse.token;
 
     const processedResults = processAnswers(formResponse);
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
@@ -48,7 +48,7 @@ export async function POST(request) {
 
     console.log('Processed results:', results);
 
-    const redirectUrl = `https://example.com/results?response_id=${responseId}`;
+    const redirectUrl = `https://self-assessment-v0-1.vercel.app/results?response_id={form_response.token}`;
 
     return NextResponse.json({ 
       success: true,
