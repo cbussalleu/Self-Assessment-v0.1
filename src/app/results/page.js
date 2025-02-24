@@ -13,56 +13,35 @@ function Results() {
     const fetchResults = async () => {
       try {
         console.log('Current URL Parameters:', searchParams.toString());
-        const response_Id = searchParams.get('response_id');
+        const responseId = searchParams.get('response_id');
         
-        if (!response_Id) {
+        if (!responseId) {
           console.log('No response ID found in URL');
           setLoading(false);
           return;
         }
 
-        console.log('Response ID:', response_Id);
+        console.log('Response ID:', responseId);
         
-        // Desactivamos temporalmente la llamada a la API y usamos datos fijos para pruebas
-        /*
-        const response = await fetch(`/api/public`, {
-          method: 'GET',
-          headers: {
-            'response_id': response_Id
-          }
-        });
+        // Hacer la llamada a la API para obtener los resultados reales
+        const response = await fetch(`/api/results/${responseId}`);
 
         if (!response.ok) {
           console.error('Error fetching results:', response.statusText);
-          throw new Error('Error fetching results');
+          setLoading(false);
+          return;
         }
 
         const data = await response.json();
-        */
+        console.log('Results data from API:', data);
         
-        // Datos fijos para prueba
-        const data = {
-          totalScore: 85,
-          masteryLevel: {
-            level: 5,
-            description: "Experto",
-            recommendations: "Nivel de excelencia, liderar innovación"
-          },
-          dimensionScores: [90, 80, 85, 88, 82, 90],
-          recommendations: {
-            title: "Excelencia en Diseño de Servicios",
-            description: "Eres un referente en diseño de servicios. Continúa innovando y liderando.",
-            generalRecommendations: [
-              "Desarrolla metodologías propias",
-              "Contribuye a la comunidad académica y profesional",
-              "Lidera transformaciones organizacionales",
-              "Mentoriza a nuevos profesionales"
-            ]
-          }
-        };
-        
-        console.log('Results data:', data);
-        setResults(data);
+        // Formatear los datos si es necesario
+        setResults({
+          totalScore: data.totalScore || data.total_score,
+          masteryLevel: data.masteryLevel || data.mastery_level || JSON.parse(data.mastery_level || '{}'),
+          dimensionScores: data.dimensionScores || data.dimension_scores || JSON.parse(data.dimension_scores || '[]'),
+          recommendations: data.recommendations || JSON.parse(data.recommendations || '{}')
+        });
       } catch (error) {
         console.error('Error:', error);
       } finally {
