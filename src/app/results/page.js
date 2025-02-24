@@ -12,8 +12,8 @@ function Results() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        console.log('Current URL Parameters:', searchParams.toString()); // Log para verificar parámetros de URL
-        const response_Id = searchParams.get('response_id'); // Ajuste aquí
+        console.log('Current URL Parameters:', searchParams.toString());
+        const response_Id = searchParams.get('response_id');
         
         if (!response_Id) {
           console.log('No response ID found in URL');
@@ -23,6 +23,8 @@ function Results() {
 
         console.log('Response ID:', response_Id);
         
+        // Desactivamos temporalmente la llamada a la API y usamos datos fijos para pruebas
+        /*
         const response = await fetch(`/api/public`, {
           method: 'GET',
           headers: {
@@ -36,8 +38,30 @@ function Results() {
         }
 
         const data = await response.json();
-        console.log('Results data:', data);
+        */
         
+        // Datos fijos para prueba
+        const data = {
+          totalScore: 85,
+          masteryLevel: {
+            level: 5,
+            description: "Experto",
+            recommendations: "Nivel de excelencia, liderar innovación"
+          },
+          dimensionScores: [90, 80, 85, 88, 82, 90],
+          recommendations: {
+            title: "Excelencia en Diseño de Servicios",
+            description: "Eres un referente en diseño de servicios. Continúa innovando y liderando.",
+            generalRecommendations: [
+              "Desarrolla metodologías propias",
+              "Contribuye a la comunidad académica y profesional",
+              "Lidera transformaciones organizacionales",
+              "Mentoriza a nuevos profesionales"
+            ]
+          }
+        };
+        
+        console.log('Results data:', data);
         setResults(data);
       } catch (error) {
         console.error('Error:', error);
