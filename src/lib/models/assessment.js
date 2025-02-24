@@ -3,14 +3,17 @@ import { sql } from '@vercel/postgres';
 export async function createAssessmentResult(results) {
   try {
     const {
-      responseId, // Cambiado desde response_Id
+      responseId,
       totalScore,
       masteryLevel,
       dimensionScores,
       recommendations
     } = results;
 
-    // Agrega un log para verificar qué estamos guardando
+    if (!responseId) {
+      throw new Error('Response ID is required');
+    }
+
     console.log('Saving to database:', {
       responseId,
       totalScore,
@@ -19,14 +22,21 @@ export async function createAssessmentResult(results) {
     });
 
     const query = `
-      INSERT INTO assessment_results
-      (response_id, total_score, mastery_level, dimension_scores, recommendations)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO assessment_results 
+      (response_id, total_score, mastery_level, dimension_scores, recommendations, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      ON CONFLICT (response_id) DO UPDATE 
+      SET 
+        total_score = EXCLUDED.total_score,
+        mastery_level = EXCLUDED.mastery_level,
+        dimension_scores = EXCLUDED.dimension_scores,
+        recommendations = EXCLUDED.recommendations,
+        created_at = NOW()
       RETURNING *
     `;
     
     const values = [
-      responseId, // Cambiado desde response_Id
+      responseId,
       totalScore,
       JSON.stringify(masteryLevel),
       JSON.stringify(dimensionScores),
@@ -36,17 +46,32 @@ export async function createAssessmentResult(results) {
     const result = await sql.query(query, values);
     return result.rows[0];
   } catch (error) {
-    console.error('Error creating assessment result:', error);
+    console.error('Detailed error creating assessment result:', {
+      message: error.message,
+      stack: error.stack,
+      results: results
+    });
     throw error;
   }
 }
 
 export async function getAssessmentResultByResponseId(responseId) {
   try {
+    if (!responseId) {
+      throw new Error('Response ID is required');
+    }
+
     console.log('Looking for results with responseId:', responseId);
     
     const query = `
-      SELECT * FROM assessment_results
+      SELECT 
+        response_id, 
+        total_score, 
+        mastery_level, 
+        dimension_scores, 
+        recommendations,
+        created_at
+      FROM assessment_results
       WHERE response_id = $1
       ORDER BY created_at DESC
       LIMIT 1
@@ -56,12 +81,26 @@ export async function getAssessmentResultByResponseId(responseId) {
     
     console.log('Database query result:', {
       found: result.rows.length > 0,
-      data: result.rows[0]
+      data: result.rows[0] ? {
+        ...result.rows[0],
+        mastery_level: JSON.parse(result.rows[0].mastery_level),
+        dimension_scores: JSON.parse(result.rows[0].dimension_scores),
+        recommendations: JSON.parse(result.rows[0].recommendations)
+      } : null
     });
     
-    return result.rows[0];
+    return result.rows[0] ? {
+      ...result.rows[0],
+      masteryLevel: JSON.parse(result.rows[0].mastery_level),
+      dimensionScores: JSON.parse(result.rows[0].dimension_scores),
+      recommendations: JSON.parse(result.rows[0].recommendations)
+    } : null;
   } catch (error) {
-    console.error('Error fetching assessment result:', error);
+    console.error('Detailed error fetching assessment result:', {
+      message: error.message,
+      stack: error.stack,
+      responseId: responseId
+    });
     throw error;
   }
 }
