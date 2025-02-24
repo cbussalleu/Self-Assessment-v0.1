@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createAssessmentResult } from '@/lib/models/assessment';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -16,26 +15,19 @@ export async function POST(request) {
     const processedResults = processAnswers(formResponse);
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
 
-    // Preparar datos para la base de datos
-    const resultsToStore = {
+    // Preparar resultados
+    const results = {
       responseId,
-      totalScore: processedResults.totalScore,
-      masteryLevel: processedResults.masteryLevel,
-      dimensionScores: processedResults.dimensionScores,
+      timestamp: new Date().toISOString(),
+      ...processedResults,
       recommendations
     };
 
-    console.log('Storing in database:', resultsToStore);
+    console.log('Processed results:', results);
 
-    // Guardar en la base de datos
-    await createAssessmentResult(resultsToStore);
-
-    // Enviar respuesta
     return NextResponse.json({ 
       success: true,
-      responseId,
-      ...processedResults,
-      recommendations
+      ...results
     });
 
   } catch (error) {
@@ -49,49 +41,46 @@ export async function POST(request) {
 
 function processAnswers(formResponse) {
   try {
-    // Filtrar solo las preguntas de opción múltiple
-    const multipleChoiceFields = formResponse.definition.fields.filter(field => 
-      field && field.type === 'multiple_choice' && field.choices
+    // Encontrar el índice de la pregunta introductoria
+    const introQuestionIndex = formResponse.definition.fields.findIndex(
+      field => field.title.toLowerCase().includes('por qué') || 
+              field.title.toLowerCase().includes('why')
     );
 
-    const multipleChoiceAnswers = formResponse.answers.filter(answer => 
-      answer && answer.type === 'choice'
+    // Filtrar los campos y respuestas excluyendo la pregunta introductoria
+    const fields = formResponse.definition.fields.filter((field, index) => 
+      index !== introQuestionIndex && 
+      field.type === 'multiple_choice'
     );
 
-    if (multipleChoiceAnswers.length !== 24) { // 24 = 6 dimensiones × 4 variables
-      console.warn(`Expected 24 multiple choice answers, got ${multipleChoiceAnswers.length}`);
-    }
+    const answers = formResponse.answers.filter((answer, index) => 
+      index !== introQuestionIndex && 
+      answer.type === 'choice'
+    );
+
+    console.log('Number of fields:', fields.length);
+    console.log('Number of answers:', answers.length);
 
     // Calcular el score de cada respuesta
-    const scoredAnswers = multipleChoiceAnswers.map(answer => {
-      const field = multipleChoiceFields.find(f => f.id === answer.field.id);
-      if (!field || !field.choices) {
-        throw new Error(`Invalid field configuration for answer ${answer.field.id}`);
-      }
+    const scoredAnswers = answers.map(answer => {
+      const field = fields.find(f => f.id === answer.field.id);
       const choiceIndex = field.choices.findIndex(choice => 
         choice.label === answer.choice.label
       );
       return choiceIndex + 1; // +1 para que el primer índice sea 1
     });
 
-    // Calcular el score por variable (promedio de respuestas)
-    const variableScores = [];
-    for (let i = 0; i < Math.floor(scoredAnswers.length / 4); i++) {
-      const variableAnswers = scoredAnswers.slice(i * 4, (i + 1) * 4);
-      const variableScore = variableAnswers.reduce((a, b) => a + b, 0) / variableAnswers.length;
-      variableScores.push(variableScore);
-    }
-
-    // Calcular el score por dimensión (promedio de 4 variables)
+    // Calcular scores por dimensión (4 preguntas por dimensión)
     const dimensionScores = [];
     for (let i = 0; i < 6; i++) {
-      const dimensionVariables = variableScores.slice(i * 4, (i + 1) * 4);
-      const dimensionScore = dimensionVariables.reduce((a, b) => a + b, 0) / 4;
+      const start = i * 4;
+      const dimensionAnswers = scoredAnswers.slice(start, start + 4);
+      const dimensionScore = dimensionAnswers.reduce((a, b) => a + b, 0) / 4;
       dimensionScores.push(dimensionScore * 20); // Convertir a porcentaje
     }
 
     // Calcular score total
-    const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / dimensionScores.length;
+    const totalScore = dimensionScores.reduce((a, b) => a + b, 0) / 6;
 
     return {
       dimensionScores,
