@@ -14,18 +14,18 @@ function Results() {
     const fetchResults = async () => {
       try {
         console.log('Current URL Parameters:', searchParams.toString());
-        const responseId = searchParams.get('response_id');
+        const response_id = searchParams.get('response_id');
         
-        if (!responseId) {
+        if (!response_id) {
           console.log('No response ID found in URL');
           setError('No se encontró el identificador de resultados');
           setLoading(false);
           return;
         }
 
-        console.log('Response ID:', responseId);
+        console.log('Response ID:', response_id);
         
-        const response = await fetch(`/api/results/${responseId}`);
+        const response = await fetch(`/api/results/${response_id}`);
 
         if (!response.ok) {
           const errorData = await response.json();
