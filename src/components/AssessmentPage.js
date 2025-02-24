@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 
 // Componente personalizado para el botón estilo Strategyzer
 const StrategyzerButton = ({ children, onClick, className = "" }) => {
+ console.log(process.env.MY_ENV_VARIABLE); // Usa la variable de entorno
   return (
     <Button 
       className={`
