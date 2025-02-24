@@ -7,10 +7,19 @@ export const runtime = 'edge';
 export async function POST(request) {
   try {
     const data = await request.json();
-    
     const formResponse = data.form_response;
     const responseId = formResponse.token;
-    
+
+    // Validar existencia de fields y choices
+    formResponse.definition.fields.forEach((field, index) => {
+      if (!field) {
+        throw new Error(`Field definition for index ${index} is undefined`);
+      }
+      if (!field.choices) {
+        throw new Error(`Choices for field index ${index} are undefined`);
+      }
+    });
+
     // Procesar las respuestas
     const processedResults = processAnswers(formResponse);
     const recommendations = getRecommendations(processedResults.masteryLevel.level);
@@ -47,18 +56,6 @@ export async function POST(request) {
 function processAnswers(formResponse) {
   // Omitir la primera pregunta (introductoria)
   const dimensionAnswers = formResponse.answers.slice(1);
-  
-  // Validar existencia de fields y choices
-  dimensionAnswers.forEach((answer, index) => {
-    const field = formResponse.definition.fields[index + 1];
-    if (!field) {
-      throw new Error(`Field definition for index ${index + 1} is undefined`);
-    }
-    const choices = field.choices;
-    if (!choices) {
-      throw new Error(`Choices for field index ${index + 1} are undefined`);
-    }
-  });
 
   // Mapear cada respuesta a un valor numérico (1 al 5)
   const scoredAnswers = dimensionAnswers.map((answer, index) => {
