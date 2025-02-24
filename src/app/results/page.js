@@ -4,7 +4,6 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from 'next/navigation';
 
-// Componente que maneja los resultados
 function Results() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
