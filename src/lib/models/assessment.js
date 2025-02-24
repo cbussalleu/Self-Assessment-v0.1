@@ -3,7 +3,7 @@ import { sql } from '@vercel/postgres';
 export async function createAssessmentResult(results) {
   try {
     const {
-      responseId,
+      response_Id,
       totalScore,
       masteryLevel,
       dimensionScores,
@@ -18,7 +18,7 @@ export async function createAssessmentResult(results) {
     `;
 
     const values = [
-      responseId,
+      response_Id,
       totalScore,
       JSON.stringify(masteryLevel),
       JSON.stringify(dimensionScores),
@@ -33,7 +33,7 @@ export async function createAssessmentResult(results) {
   }
 }
 
-export async function getAssessmentResultByResponseId(responseId) {
+export async function getAssessmentResultByResponseId(response_Id) {
   try {
     const query = `
       SELECT * FROM assessment_results
@@ -42,7 +42,7 @@ export async function getAssessmentResultByResponseId(responseId) {
       LIMIT 1
     `;
 
-    const result = await sql.query(query, [responseId]);
+    const result = await sql.query(query, [response_Id]);
     return result.rows[0];
   } catch (error) {
     console.error('Error fetching assessment result:', error);
