@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { getAssessmentResultByResponseId } from '@/lib/models/assessment';
 
 export async function GET(request, { params }) {
-  const { responseId } = params;
+  const { response_Id } = params;
 
   try {
-    const result = await getAssessmentResultByResponseId(responseId);
+    const result = await getAssessmentResultByResponseId(response_Id);
 
     if (!result) {
       return NextResponse.json({ 
