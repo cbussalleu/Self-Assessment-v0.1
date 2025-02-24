@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 
 function Results() {
   const [results, setResults] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
 
@@ -17,17 +18,19 @@ function Results() {
         
         if (!responseId) {
           console.log('No response ID found in URL');
+          setError('No se encontró el identificador de resultados');
           setLoading(false);
           return;
         }
 
         console.log('Response ID:', responseId);
         
-        // Hacer la llamada a la API para obtener los resultados reales
         const response = await fetch(`/api/results/${responseId}`);
 
         if (!response.ok) {
-          console.error('Error fetching results:', response.statusText);
+          const errorData = await response.json();
+          console.error('Error fetching results:', errorData);
+          setError(errorData.error || 'No se pudieron cargar los resultados');
           setLoading(false);
           return;
         }
@@ -35,15 +38,32 @@ function Results() {
         const data = await response.json();
         console.log('Results data from API:', data);
         
-        // Formatear los datos si es necesario
-        setResults({
-          totalScore: data.totalScore || data.total_score,
-          masteryLevel: data.masteryLevel || data.mastery_level || JSON.parse(data.mastery_level || '{}'),
-          dimensionScores: data.dimensionScores || data.dimension_scores || JSON.parse(data.dimension_scores || '[]'),
-          recommendations: data.recommendations || JSON.parse(data.recommendations || '{}')
-        });
+        // Formatear los datos de manera más robusta
+        const processedResults = {
+          totalScore: Number(data.totalScore || data.total_score || 0).toFixed(1),
+          masteryLevel: data.masteryLevel || 
+            (typeof data.mastery_level === 'string' 
+              ? JSON.parse(data.mastery_level) 
+              : { description: 'No disponible', level: 0 }),
+          dimensionScores: Array.isArray(data.dimensionScores) 
+            ? data.dimensionScores 
+            : (data.dimension_scores 
+              ? JSON.parse(data.dimension_scores) 
+              : [0, 0, 0, 0, 0, 0]),
+          recommendations: data.recommendations || 
+            (typeof data.recommendations === 'string' 
+              ? JSON.parse(data.recommendations) 
+              : {
+                  title: 'Recomendaciones',
+                  description: 'No hay recomendaciones disponibles',
+                  generalRecommendations: []
+                })
+        };
+
+        setResults(processedResults);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Unexpected error:', error);
+        setError('Ocurrió un error inesperado al cargar los resultados');
       } finally {
         setLoading(false);
       }
@@ -60,16 +80,21 @@ function Results() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-2xl text-red-500">{error}</div>
+      </div>
+    );
+  }
+
   if (!results) {
-    console.log('Results are null or undefined');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-2xl">No se encontraron resultados</div>
       </div>
     );
   }
-
-  console.log('Rendering results:', results);
 
   const dimensionNames = [
     'Capacidades Organizacionales',
@@ -82,18 +107,16 @@ function Results() {
 
   return (
     <div className="min-h-screen font-westmount bg-gray-50">
-      {/* Hero Section */}
       <section className="bg-[#0026df] text-white py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl font-bold mb-8">Resultados de tu Autoevaluación</h1>
-            <div className="text-8xl font-bold mb-4">{results.totalScore.toFixed(1)}%</div>
+            <div className="text-8xl font-bold mb-4">{results.totalScore}%</div>
             <p className="text-2xl">{results.masteryLevel.description}</p>
           </div>
         </div>
       </section>
 
-      {/* Dimensiones */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Detalle por Dimensiones</h2>
@@ -118,7 +141,6 @@ function Results() {
         </div>
       </section>
 
-      {/* Recomendaciones */}
       <section className="bg-[#FFD642] py-20">
         <div className="container mx-auto px-4">
           <Card className="p-8">
