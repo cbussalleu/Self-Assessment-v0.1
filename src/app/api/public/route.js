@@ -48,17 +48,22 @@ function processAnswers(formResponse) {
   // Omitir la primera pregunta (introductoria)
   const dimensionAnswers = formResponse.answers.slice(1);
   
-  // Mapear cada respuesta a un valor numérico (1 al 5)
-  const scoredAnswers = dimensionAnswers.map((answer, index) => {
+  // Validar existencia de fields y choices
+  dimensionAnswers.forEach((answer, index) => {
     const field = formResponse.definition.fields[index + 1];
     if (!field) {
       throw new Error(`Field definition for index ${index + 1} is undefined`);
     }
     const choices = field.choices;
-    console.log('Choices:', choices);
     if (!choices) {
       throw new Error(`Choices for field index ${index + 1} are undefined`);
     }
+  });
+
+  // Mapear cada respuesta a un valor numérico (1 al 5)
+  const scoredAnswers = dimensionAnswers.map((answer, index) => {
+    const field = formResponse.definition.fields[index + 1];
+    const choices = field.choices;
     const choiceIndex = choices.findIndex(choice => 
       choice.label === answer.choice.label
     );
