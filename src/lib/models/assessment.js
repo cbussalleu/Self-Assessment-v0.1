@@ -3,24 +3,32 @@ import { sql } from '@vercel/postgres';
 export async function createAssessmentResult(results) {
   try {
     const {
-      response_id, // Cambiar a responseId
+      response_id,
+      responseId,
       totalScore,
+      total_score,
       masteryLevel,
+      mastery_level,
       dimensionScores,
+      dimension_scores,
       recommendations
     } = results;
 
-    const responseId = response_id; // Agregar esta línea para asignar response_id a responseId
-
-    if (!responseId) {
+    // Usar cualquier versión del ID que esté disponible
+    const finalResponseId = response_id || responseId;
+    const finalTotalScore = totalScore || total_score || 0;
+    const finalMasteryLevel = masteryLevel || mastery_level || { level: 1, description: "Principiante" };
+    const finalDimensionScores = dimensionScores || dimension_scores || [0,0,0,0,0,0];
+    
+    if (!finalResponseId) {
       throw new Error('Response ID is required');
     }
 
     console.log('Saving to database:', {
-      responseId,
-      totalScore,
-      masteryLevel: JSON.stringify(masteryLevel),
-      dimensionScores: JSON.stringify(dimensionScores)
+      responseId: finalResponseId,
+      totalScore: finalTotalScore,
+      masteryLevel: JSON.stringify(finalMasteryLevel),
+      dimensionScores: JSON.stringify(finalDimensionScores)
     });
 
     const query = `
