@@ -2,6 +2,15 @@ import { sql } from '@vercel/postgres';
 
 export async function createAssessmentResult(results) {
   try {
+    // Log de depuración para ver las credenciales que se están usando
+    console.log('Database connection info:', {
+      host: process.env.POSTGRES_HOST || 'not set',
+      user: process.env.POSTGRES_USER || 'not set',
+      database: process.env.POSTGRES_DATABASE || 'not set',
+      // No loguees la contraseña real por seguridad
+      passwordSet: process.env.POSTGRES_PASSWORD ? 'yes' : 'no'
+    });
+
     const {
       response_id,
       responseId,
