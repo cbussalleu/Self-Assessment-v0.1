@@ -205,6 +205,7 @@ function Results() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingAttempts, setLoadingAttempts] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
   const searchParams = useSearchParams();
 
@@ -272,7 +273,62 @@ function Results() {
         description: "Aprende a comunicar efectivamente decisiones de diseño a stakeholders."
       }
     ],
-    // Y así sucesivamente para las demás dimensiones...
+    2: [ // Cognitivas
+      {
+        title: "Systems Thinking in Practice",
+        type: "curso",
+        link: "https://www.edx.org/course/systems-thinking-in-practice",
+        description: "Desarrolla tu capacidad para comprender y modelar sistemas complejos."
+      },
+      {
+        title: "Thinking in Systems: A Primer",
+        type: "libro",
+        link: "https://www.amazon.com/Thinking-Systems-Donella-H-Meadows/dp/1603580557",
+        description: "El libro clásico de Donella Meadows sobre pensamiento sistémico."
+      }
+    ],
+    3: [ // Técnicas
+      {
+        title: "User Experience Research & Design",
+        type: "curso",
+        link: "https://www.coursera.org/specializations/michiganux",
+        description: "Especialización completa de la Universidad de Michigan sobre UX Research y Design."
+      },
+      {
+        title: "Universal Methods of Design",
+        type: "libro",
+        link: "https://www.amazon.com/Universal-Methods-Design-Innovative-Effective/dp/1592537561",
+        description: "Compendio de métodos para investigación, análisis y conceptualización en diseño."
+      }
+    ],
+    4: [ // Emocionales
+      {
+        title: "Emotional Intelligence in Leadership",
+        type: "curso",
+        link: "https://www.linkedin.com/learning/emotional-intelligence-in-leadership",
+        description: "Aprende a desarrollar y aplicar inteligencia emocional en contextos profesionales."
+      },
+      {
+        title: "Permission to Feel",
+        type: "libro",
+        link: "https://www.amazon.com/Permission-Feel-Unlocking-Emotions-Ourselves/dp/1250212847",
+        description: "Marc Brackett explora cómo entender y gestionar nuestras emociones."
+      }
+    ],
+    5: [ // Liderazgo
+      {
+        title: "Design Leadership",
+        type: "curso",
+        link: "https://www.cooperhewitt.org/design-leadership",
+        description: "Programa enfocado en desarrollar capacidades de liderazgo en diseño."
+      },
+      {
+        title: "Radical Candor",
+        type: "libro",
+        link: "https://www.amazon.com/Radical-Candor-Revised-Kick-Ass-Humanity/dp/1250235375",
+        description: "Kim Scott presenta un enfoque efectivo para el feedback y desarrollo de equipos."
+      }
+    ]
   };
 
   useEffect(() => {
@@ -290,46 +346,84 @@ function Results() {
 
         console.log('Response ID:', response_id);
         
-        const response = await fetch(`/api/results/${response_id}`);
+        // Función para intentar cargar los resultados con reintentos
+        const tryLoadResults = async (attempts) => {
+          console.log(`Intento ${attempts + 1} de cargar resultados para: ${response_id}`);
+          
+          try {
+            const response = await fetch(`/api/results/${response_id}`);
+            
+            if (response.status === 404) {
+              // Si no se encuentran resultados, y aún podemos reintentar
+              if (attempts < 5) {
+                console.log(`Resultados no encontrados. Reintentando en 3 segundos...`);
+                setLoadingAttempts(attempts + 1);
+                // Esperar 3 segundos antes de reintentar
+                setTimeout(() => tryLoadResults(attempts + 1), 3000);
+                return;
+              } else {
+                // Si ya hemos intentado demasiadas veces, mostrar error
+                setError('No se encontraron resultados después de varios intentos. Por favor, inténtalo de nuevo más tarde.');
+                setLoading(false);
+                return;
+              }
+            }
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error('Error fetching results:', errorData);
+              setError(errorData.error || 'No se pudieron cargar los resultados');
+              setLoading(false);
+              return;
+            }
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error fetching results:', errorData);
-          setError(errorData.error || 'No se pudieron cargar los resultados');
-          setLoading(false);
-          return;
-        }
+            const data = await response.json();
+            console.log('Results data from API:', data);
+            
+            // Formatear los datos de manera más robusta
+            const processedResults = {
+              totalScore: Number(data.totalScore || data.total_score || 0).toFixed(1),
+              masteryLevel: data.masteryLevel || 
+                (typeof data.mastery_level === 'string' 
+                  ? JSON.parse(data.mastery_level) 
+                  : { description: 'No disponible', level: 0 }),
+              dimensionScores: Array.isArray(data.dimensionScores) 
+                ? data.dimensionScores 
+                : (data.dimension_scores 
+                  ? JSON.parse(data.dimension_scores) 
+                  : [0, 0, 0, 0, 0, 0]),
+              recommendations: data.recommendations || 
+                (typeof data.recommendations === 'string' 
+                  ? JSON.parse(data.recommendations) 
+                  : {
+                      title: 'Recomendaciones',
+                      description: 'No hay recomendaciones disponibles',
+                      generalRecommendations: []
+                    })
+            };
 
-        const data = await response.json();
-        console.log('Results data from API:', data);
-        
-        // Formatear los datos de manera más robusta
-        const processedResults = {
-          totalScore: Number(data.totalScore || data.total_score || 0).toFixed(1),
-          masteryLevel: data.masteryLevel || 
-            (typeof data.mastery_level === 'string' 
-              ? JSON.parse(data.mastery_level) 
-              : { description: 'No disponible', level: 0 }),
-          dimensionScores: Array.isArray(data.dimensionScores) 
-            ? data.dimensionScores 
-            : (data.dimension_scores 
-              ? JSON.parse(data.dimension_scores) 
-              : [0, 0, 0, 0, 0, 0]),
-          recommendations: data.recommendations || 
-            (typeof data.recommendations === 'string' 
-              ? JSON.parse(data.recommendations) 
-              : {
-                  title: 'Recomendaciones',
-                  description: 'No hay recomendaciones disponibles',
-                  generalRecommendations: []
-                })
+            setResults(processedResults);
+            setLoading(false);
+          } catch (error) {
+            console.error('Error in attempt:', error);
+            
+            // Si aún tenemos intentos disponibles, reintentar
+            if (attempts < 5) {
+              console.log(`Error en intento ${attempts + 1}. Reintentando en 3 segundos...`);
+              setLoadingAttempts(attempts + 1);
+              setTimeout(() => tryLoadResults(attempts + 1), 3000);
+            } else {
+              setError('Ocurrió un error al cargar los resultados después de varios intentos.');
+              setLoading(false);
+            }
+          }
         };
 
-        setResults(processedResults);
+        // Iniciar el proceso de carga con reintentos
+        tryLoadResults(0);
       } catch (error) {
         console.error('Unexpected error:', error);
         setError('Ocurrió un error inesperado al cargar los resultados');
-      } finally {
         setLoading(false);
       }
     };
@@ -339,24 +433,63 @@ function Results() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">Cargando resultados...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+        <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-8"></div>
+        <div className="text-2xl font-bold text-blue-900 mb-4 text-center">Cargando tus resultados...</div>
+        <div className="text-gray-600 max-w-md text-center mb-2">
+          {loadingAttempts > 0 ? 
+            `Estamos procesando tu evaluación. Intento ${loadingAttempts} de 6...` : 
+            'Estamos analizando tus respuestas para generar recomendaciones personalizadas.'}
+        </div>
+        <div className="text-sm text-gray-500 max-w-md text-center">
+          Este proceso puede tomar unos momentos. Por favor, no cierres esta ventana.
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl text-red-500">{error}</div>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+        <div className="text-2xl text-red-600 font-bold mb-4 text-center">{error}</div>
+        <p className="text-gray-600 max-w-md text-center mb-8">
+          Lo sentimos, no pudimos cargar tus resultados. Esto puede deberse a que los datos aún están siendo procesados o a un problema técnico.
+        </p>
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+          onClick={() => window.location.reload()}
+        >
+          Intentar nuevamente
+        </Button>
+        <Button 
+          className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg"
+          onClick={() => window.location.href = '/'}
+        >
+          Volver al Inicio
+        </Button>
       </div>
     );
   }
 
   if (!results) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">No se encontraron resultados</div>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+        <div className="text-2xl font-bold text-gray-800 mb-4 text-center">No se encontraron resultados</div>
+        <p className="text-gray-600 max-w-md text-center mb-8">
+          No pudimos encontrar los resultados para la evaluación solicitada. Es posible que el enlace no sea válido o que los datos hayan sido eliminados.
+        </p>
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+          onClick={() => window.location.href = '/assessment'}
+        >
+          Realizar nueva evaluación
+        </Button>
+        <Button 
+          className="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg"
+          onClick={() => window.location.href = '/'}
+        >
+          Volver al Inicio
+        </Button>
       </div>
     );
   }
@@ -479,6 +612,9 @@ function Results() {
                             }
                             return null;
                           })}
+                          {results.dimensionScores.filter(score => score >= 70).length === 0 && (
+                            <li className="text-gray-500 italic">Sigue trabajando en desarrollar tus capacidades. ¡Vas por buen camino!</li>
+                          )}
                         </ul>
                       </CardContent>
                     </Card>
@@ -498,6 +634,9 @@ function Results() {
                             }
                             return null;
                           })}
+                          {results.dimensionScores.filter(score => score < 70).length === 0 && (
+                            <li className="text-gray-500 italic">¡Felicidades! Has alcanzado un nivel avanzado en todas las dimensiones.</li>
+                          )}
                         </ul>
                       </CardContent>
                     </Card>
@@ -611,6 +750,30 @@ function Results() {
                     </div>
                   );
                 })}
+                
+                {/* Si todas las dimensiones tienen puntuación mayor a 70% */}
+                {dimensions.every((_, idx) => results.dimensionScores[idx] >= 70) && (
+                  <div className="text-center p-8 bg-blue-50 rounded-lg">
+                    <h3 className="text-xl font-bold mb-4 text-blue-800">¡Felicidades por tu alto nivel!</h3>
+                    <p className="text-gray-700 mb-4">
+                      Has alcanzado un excelente nivel en todas las dimensiones evaluadas. Te recomendamos enfocarte en:
+                    </p>
+                    <ul className="text-left inline-block mx-auto mb-6">
+                      <li className="flex items-start gap-2 mb-3">
+                        <div className="mt-1 w-2 h-2 rounded-full bg-blue-600 flex-shrink-0"></div>
+                        <span>Compartir tu conocimiento y mentorizar a otros profesionales</span>
+                      </li>
+                      <li className="flex items-start gap-2 mb-3">
+                        <div className="mt-1 w-2 h-2 rounded-full bg-blue-600 flex-shrink-0"></div>
+                        <span>Liderar iniciativas de innovación en tu organización</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <div className="mt-1 w-2 h-2 rounded-full bg-blue-600 flex-shrink-0"></div>
+                        <span>Explorar nuevos enfoques y metodologías emergentes</span>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
             
