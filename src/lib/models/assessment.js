@@ -2,7 +2,6 @@ import { sql } from '@vercel/postgres';
 
 export async function createAssessmentResult(results) {
   try {
-    // Log de depuración para ver las credenciales que se están usando
     console.log('Database connection info:', {
       host: process.env.POSTGRES_HOST || 'not set',
       user: process.env.POSTGRES_USER || 'not set',
@@ -32,12 +31,22 @@ export async function createAssessmentResult(results) {
       throw new Error('Response ID is required');
     }
 
+    // Función para convertir objetos a JSON de manera segura
+    const safeStringifyJSON = (obj) => {
+      try {
+        return JSON.stringify(obj || {});
+      } catch (error) {
+        console.error('Error stringifying JSON:', error);
+        return '{}';
+      }
+    };
+
     console.log('Saving to database:', {
       finalResponseId,
       finalTotalScore,
-      finalMasteryLevel: JSON.stringify(finalMasteryLevel),
-      finalDimensionScores: JSON.stringify(finalDimensionScores),
-      recommendations: JSON.stringify(recommendations || {})
+      finalMasteryLevel: safeStringifyJSON(finalMasteryLevel),
+      finalDimensionScores: safeStringifyJSON(finalDimensionScores),
+      recommendations: safeStringifyJSON(recommendations)
     });
 
     const query = `
@@ -57,9 +66,9 @@ export async function createAssessmentResult(results) {
     const values = [
       finalResponseId,
       finalTotalScore,
-      JSON.stringify(finalMasteryLevel),
-      JSON.stringify(finalDimensionScores),
-      JSON.stringify(recommendations || {})
+      safeStringifyJSON(finalMasteryLevel),
+      safeStringifyJSON(finalDimensionScores),
+      safeStringifyJSON(recommendations)
     ];
     
     const result = await sql.query(query, values);
@@ -97,22 +106,38 @@ export async function getAssessmentResultByResponseId(responseId) {
     
     const result = await sql.query(query, [responseId]);
     
+    // Función para parsear JSON de manera segura
+    const safeParseJSON = (jsonString, defaultValue = null) => {
+      try {
+        return jsonString ? JSON.parse(jsonString) : defaultValue;
+      } catch (error) {
+        console.error('JSON parsing error:', {
+          jsonString,
+          error: error.message
+        });
+        return defaultValue;
+      }
+    };
+
+    if (!result.rows.length) {
+      return null;
+    }
+
+    const row = result.rows[0];
+    
     console.log('Database query result:', {
-      found: result.rows.length > 0,
-      data: result.rows[0] ? {
-        ...result.rows[0],
-        mastery_level: JSON.parse(result.rows[0].mastery_level),
-        dimension_scores: JSON.parse(result.rows[0].dimension_scores),
-        recommendations: JSON.parse(result.rows[0].recommendations)
-      } : null
+      found: true,
+      responseId: row.response_id
     });
     
-    return result.rows[0] ? {
-      ...result.rows[0],
-      masteryLevel: JSON.parse(result.rows[0].mastery_level),
-      dimensionScores: JSON.parse(result.rows[0].dimension_scores),
-      recommendations: JSON.parse(result.rows[0].recommendations)
-    } : null;
+    return {
+      responseId: row.response_id,
+      totalScore: row.total_score,
+      masteryLevel: safeParseJSON(row.mastery_level, { level: 1, description: "No determinado" }),
+      dimensionScores: safeParseJSON(row.dimension_scores, [0,0,0,0,0,0]),
+      recommendations: safeParseJSON(row.recommendations, {}),
+      createdAt: row.created_at
+    };
   } catch (error) {
     console.error('Detailed error fetching assessment result:', {
       message: error.message,
