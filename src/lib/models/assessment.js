@@ -7,7 +7,6 @@ export async function createAssessmentResult(results) {
       host: process.env.POSTGRES_HOST || 'not set',
       user: process.env.POSTGRES_USER || 'not set',
       database: process.env.POSTGRES_DATABASE || 'not set',
-      // No loguees la contraseña real por seguridad
       passwordSet: process.env.POSTGRES_PASSWORD ? 'yes' : 'no'
     });
 
@@ -34,10 +33,11 @@ export async function createAssessmentResult(results) {
     }
 
     console.log('Saving to database:', {
-      responseId: finalResponseId,
-      totalScore: finalTotalScore,
-      masteryLevel: JSON.stringify(finalMasteryLevel),
-      dimensionScores: JSON.stringify(finalDimensionScores)
+      finalResponseId,
+      finalTotalScore,
+      finalMasteryLevel: JSON.stringify(finalMasteryLevel),
+      finalDimensionScores: JSON.stringify(finalDimensionScores),
+      recommendations: JSON.stringify(recommendations || {})
     });
 
     const query = `
@@ -55,11 +55,11 @@ export async function createAssessmentResult(results) {
     `;
     
     const values = [
-      responseId,
-      totalScore,
-      JSON.stringify(masteryLevel),
-      JSON.stringify(dimensionScores),
-      JSON.stringify(recommendations)
+      finalResponseId,
+      finalTotalScore,
+      JSON.stringify(finalMasteryLevel),
+      JSON.stringify(finalDimensionScores),
+      JSON.stringify(recommendations || {})
     ];
     
     const result = await sql.query(query, values);
@@ -79,7 +79,6 @@ export async function getAssessmentResultByResponseId(responseId) {
     if (!responseId) {
       throw new Error('Response ID is required');
     }
-
     console.log('Looking for results with responseId:', responseId);
     
     const query = `
