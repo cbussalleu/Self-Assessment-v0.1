@@ -2,13 +2,13 @@ import { sql } from '@vercel/postgres';
 
 export async function createAssessmentResult(results) {
   try {
+    // Log de depuración para ver las credenciales que se están usando
     console.log('Database connection info:', {
       host: process.env.POSTGRES_HOST || 'not set',
       user: process.env.POSTGRES_USER || 'not set',
       database: process.env.POSTGRES_DATABASE || 'not set',
       passwordSet: process.env.POSTGRES_PASSWORD ? 'yes' : 'no'
     });
-
     const {
       response_id,
       responseId,
@@ -20,7 +20,6 @@ export async function createAssessmentResult(results) {
       dimension_scores,
       recommendations
     } = results;
-
     // Usar cualquier versión del ID que esté disponible
     const finalResponseId = response_id || responseId;
     const finalTotalScore = totalScore || total_score || 0;
@@ -30,25 +29,13 @@ export async function createAssessmentResult(results) {
     if (!finalResponseId) {
       throw new Error('Response ID is required');
     }
-
-    // Función para convertir objetos a JSON de manera segura
-    const safeStringifyJSON = (obj) => {
-      try {
-        return JSON.stringify(obj || {});
-      } catch (error) {
-        console.error('Error stringifying JSON:', error);
-        return '{}';
-      }
-    };
-
     console.log('Saving to database:', {
       finalResponseId,
       finalTotalScore,
-      finalMasteryLevel: safeStringifyJSON(finalMasteryLevel),
-      finalDimensionScores: safeStringifyJSON(finalDimensionScores),
-      recommendations: safeStringifyJSON(recommendations)
+      finalMasteryLevel: JSON.stringify(finalMasteryLevel),
+      finalDimensionScores: JSON.stringify(finalDimensionScores),
+      recommendations: JSON.stringify(recommendations || {})
     });
-
     const query = `
       INSERT INTO assessment_results 
       (response_id, total_score, mastery_level, dimension_scores, recommendations, created_at)
@@ -66,9 +53,9 @@ export async function createAssessmentResult(results) {
     const values = [
       finalResponseId,
       finalTotalScore,
-      safeStringifyJSON(finalMasteryLevel),
-      safeStringifyJSON(finalDimensionScores),
-      safeStringifyJSON(recommendations)
+      JSON.stringify(finalMasteryLevel),
+      JSON.stringify(finalDimensionScores),
+      JSON.stringify(recommendations || {})
     ];
     
     const result = await sql.query(query, values);
@@ -107,12 +94,17 @@ export async function getAssessmentResultByResponseId(responseId) {
     const result = await sql.query(query, [responseId]);
     
     // Función para parsear JSON de manera segura
-    const safeParseJSON = (jsonString, defaultValue = null) => {
+    const safeParseJSON = (input, defaultValue = null) => {
+      // Si ya es un objeto, devolverlo directamente
+      if (typeof input === 'object' && input !== null) {
+        return input;
+      }
+
       try {
-        return jsonString ? JSON.parse(jsonString) : defaultValue;
+        return input ? JSON.parse(input) : defaultValue;
       } catch (error) {
         console.error('JSON parsing error:', {
-          jsonString,
+          input,
           error: error.message
         });
         return defaultValue;
