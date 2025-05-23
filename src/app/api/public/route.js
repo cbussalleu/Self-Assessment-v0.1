@@ -1,13 +1,22 @@
 import { NextResponse } from 'next/server';
 import { createAssessmentResult } from '@/lib/models/assessment';
 
+// FORCE CACHE INVALIDATION - Cambiar este número invalida TODA la función
+const FORCE_CACHE_INVALIDATION = "v2025_05_23_CACHE_CLEAR_001";
+
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
 export async function POST(request) {
   try {
     const data = await request.json();
-    console.log('🔥🔥🔥 ULTIMATE DEBUG VERSION - 2025-05-23 🔥🔥🔥');
+    
+    // LOG SUPER OBVIO PARA CONFIRMAR NUEVA VERSIÓN
+    console.log('🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢');
+    console.log('🟢 NUEVA VERSIÓN EJECUTÁNDOSE - CACHE INVALIDATED');
+    console.log('🟢 VERSION:', FORCE_CACHE_INVALIDATION);
+    console.log('🟢 TIMESTAMP:', new Date().toISOString());
+    console.log('🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢');
     
     const formResponse = data.form_response;
     if (!formResponse) {
@@ -21,11 +30,13 @@ export async function POST(request) {
     const results = {
       response_id,
       timestamp: new Date().toISOString(),
+      version: FORCE_CACHE_INVALIDATION,
       ...processedResults,
       recommendations
     };
 
-    console.log('💾 GUARDANDO RESULTADOS:', {
+    console.log('💾 GUARDANDO RESULTADOS NUEVA VERSIÓN:', {
+      version: FORCE_CACHE_INVALIDATION,
       totalScore: results.totalScore,
       dimensionScores: results.dimensionScores,
       masteryLevel: results.masteryLevel.level
@@ -39,19 +50,22 @@ export async function POST(request) {
     return NextResponse.json({ 
       success: true,
       redirectUrl,
+      version: FORCE_CACHE_INVALIDATION,
       ...results
     });
 
   } catch (error) {
-    console.error('💥 ERROR:', error);
+    console.error('💥 ERROR NUEVA VERSIÓN:', error);
     return NextResponse.json({ 
       error: 'Error processing webhook',
-      details: error.message
+      details: error.message,
+      version: FORCE_CACHE_INVALIDATION
     }, { status: 500 });
   }
 }
 
 export async function GET(request) {
+  console.log('🟢 GET REQUEST NUEVA VERSIÓN:', FORCE_CACHE_INVALIDATION);
   try {
     const response_id = request.headers.get('response-id') || request.headers.get('response_id');
     console.log('GET request received with ID:', response_id);
@@ -59,123 +73,130 @@ export async function GET(request) {
     if (!response_id) {
       console.log('No response ID provided in headers');
       return NextResponse.json({ 
-        error: 'Missing response ID'
+        error: 'Missing response ID',
+        version: FORCE_CACHE_INVALIDATION
       }, { status: 400 });
     }
 
     const result = await getAssessmentResultByResponseId(response_id);
     
     console.log('Returning result:', result);
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      version: FORCE_CACHE_INVALIDATION
+    });
   } catch (error) {
     console.error('Error fetching results:', error);
     return NextResponse.json({ 
       error: 'Error fetching results',
-      details: error.message
+      details: error.message,
+      version: FORCE_CACHE_INVALIDATION
     }, { status: 500 });
   }
 }
 
 function processAnswers(formResponse) {
+  console.log('🔥🔥🔥 PROCESS ANSWERS - NUEVA VERSIÓN 🔥🔥🔥');
+  console.log('🔥 VERSION:', FORCE_CACHE_INVALIDATION);
+  console.log('🔥 TIMESTAMP:', new Date().toISOString());
+  
   try {
-    console.log('🔍 === ULTIMATE DEBUG: ANALIZANDO ESTRUCTURA COMPLETA ===');
-    
-    // LOG COMPLETO DE LA ESTRUCTURA
-    console.log('📋 formResponse keys:', Object.keys(formResponse));
-    console.log('📋 formResponse.answers exists:', !!formResponse.answers);
-    console.log('📋 formResponse.answers type:', typeof formResponse.answers);
-    console.log('📋 formResponse.answers length:', formResponse.answers?.length);
-
     if (!formResponse.answers) {
       console.error('❌ NO ANSWERS FOUND');
       throw new Error('No answers found in formResponse');
     }
 
-    // LOG DETALLADO DE TODAS LAS RESPUESTAS
-    console.log('📝 === TODAS LAS RESPUESTAS RECIBIDAS ===');
-    formResponse.answers.forEach((answer, index) => {
-      console.log(`Respuesta ${index + 1}:`, {
-        type: answer.type,
-        fieldId: answer.field?.id,
-        fieldType: answer.field?.type,
-        choiceLabel: answer.choice?.label,
-        choiceId: answer.choice?.id,
-        textValue: answer.text,
-        numberValue: answer.number,
-        fullAnswer: JSON.stringify(answer, null, 2)
-      });
-    });
+    // LOG CRÍTICO: Mostrar estructura de respuestas
+    console.log('📋 === ESTRUCTURA DE RESPUESTAS ===');
+    console.log('📋 Total answers:', formResponse.answers?.length);
+    console.log('📋 Answer types:', formResponse.answers?.map(a => a.type));
 
     // Filtrar respuestas de opción múltiple
     const multipleChoiceAnswers = formResponse.answers.filter(answer => 
       answer && answer.type === 'choice'
     );
 
-    console.log('🎯 === RESPUESTAS DE OPCIÓN MÚLTIPLE ===');
-    console.log(`Total respuestas 'choice': ${multipleChoiceAnswers.length}`);
+    console.log('🎯 === RESPUESTAS CHOICE ===');
+    console.log(`🎯 Total respuestas 'choice': ${multipleChoiceAnswers.length}`);
     
+    // LOG DETALLADO DE CADA RESPUESTA CHOICE
     multipleChoiceAnswers.forEach((answer, index) => {
-      console.log(`MC ${index + 1}:`, {
+      console.log(`🎯 Choice ${index + 1}:`, {
         fieldId: answer.field?.id,
-        choiceLabel: answer.choice?.label,
-        choiceId: answer.choice?.id
+        choiceLabel: answer.choice?.label?.substring(0, 50) + '...',
+        choiceIndex: answer.choice?.id
       });
     });
 
-    // Verificar si necesitamos excluir la primera
-    console.log('🚨 === ANÁLISIS DE LA PRIMERA RESPUESTA ===');
-    if (multipleChoiceAnswers.length > 0) {
-      const firstChoice = multipleChoiceAnswers[0];
-      console.log('Primera respuesta choice:', {
-        fieldId: firstChoice.field?.id,
-        choiceLabel: firstChoice.choice?.label,
-        isIntroQuestion: firstChoice.choice?.label?.includes('capacidades') || 
-                        firstChoice.choice?.label?.includes('curiosidad') ||
-                        firstChoice.choice?.label?.includes('selección')
-      });
+    // 🚨 EXCLUSIÓN CRÍTICA: PRIMERA PREGUNTA
+    console.log('🚨 === EXCLUYENDO PRIMERA PREGUNTA ===');
+    console.log('🚨 Antes de excluir:', multipleChoiceAnswers.length, 'respuestas');
+    
+    const evaluationAnswers = multipleChoiceAnswers.slice(1); // ← EXCLUIR PRIMERA
+    
+    console.log('🚨 Después de excluir primera:', evaluationAnswers.length, 'respuestas');
+    console.log('🚨 ESPERADO: 24 respuestas de evaluación');
+    
+    if (evaluationAnswers.length !== 24) {
+      console.error(`🚨 ERROR: Se esperaban 24 respuestas, recibidas ${evaluationAnswers.length}`);
     }
 
-    // Procesar con diferentes estrategias para comparar
-    console.log('🔬 === PROCESANDO CON DIFERENTES ESTRATEGIAS ===');
+    // PROCESAR SOLO LAS 24 RESPUESTAS DE EVALUACIÓN
+    const dimensionScores = [0, 0, 0, 0, 0, 0];
+    const rawScores = [];
+
+    console.log('🔄 === PROCESANDO 24 RESPUESTAS DE EVALUACIÓN ===');
     
-    // Estrategia 1: Incluir todas las respuestas choice
-    const strategy1Result = processWithStrategy(multipleChoiceAnswers, formResponse, 'INCLUIR_TODAS');
-    
-    // Estrategia 2: Excluir la primera respuesta choice
-    const strategy2Result = processWithStrategy(multipleChoiceAnswers.slice(1), formResponse, 'EXCLUIR_PRIMERA');
-    
-    console.log('📊 === COMPARACIÓN DE RESULTADOS ===');
-    console.log('Estrategia 1 (incluir todas):', {
-      totalQuestions: strategy1Result.questionCount,
-      totalRawScore: strategy1Result.totalRawScore,
-      percentage: strategy1Result.percentage.toFixed(1) + '%'
+    evaluationAnswers.forEach((answer, index) => {
+      const field = formResponse.definition.fields.find(f => f.id === answer.field.id);
+      let score = 1;
+      
+      if (field && field.choices) {
+        const choiceIndex = field.choices.findIndex(choice => 
+          choice.label === answer.choice.label
+        );
+        if (choiceIndex !== -1) {
+          score = choiceIndex + 1; // 0-4 → 1-5
+        }
+      }
+      
+      rawScores.push(score);
+      
+      // Dividir en 6 dimensiones de 4 preguntas cada una
+      const dimensionIndex = Math.floor(index / 4);
+      if (dimensionIndex < 6) {
+        dimensionScores[dimensionIndex] += score;
+      }
+      
+      console.log(`🔄 Q${index + 1}: Score=${score}, Dim=${dimensionIndex + 1}`);
     });
-    
-    console.log('Estrategia 2 (excluir primera):', {
-      totalQuestions: strategy2Result.questionCount,
-      totalRawScore: strategy2Result.totalRawScore,
-      percentage: strategy2Result.percentage.toFixed(1) + '%'
-    });
 
-    // Decidir cuál usar basado en el número de preguntas
-    let finalResult;
-    if (strategy2Result.questionCount === 24) {
-      console.log('✅ USANDO ESTRATEGIA 2 (excluir primera) - 24 preguntas ✅');
-      finalResult = strategy2Result;
-    } else if (strategy1Result.questionCount === 24) {
-      console.log('✅ USANDO ESTRATEGIA 1 (incluir todas) - 24 preguntas ✅');
-      finalResult = strategy1Result;
-    } else {
-      console.log('⚠️ NINGUNA ESTRATEGIA DA 24 PREGUNTAS, USANDO ESTRATEGIA 2');
-      finalResult = strategy2Result;
-    }
+    const totalRawScore = dimensionScores.reduce((sum, score) => sum + score, 0);
+    const dimensionPercentages = dimensionScores.map(score => (score / 20) * 100);
+    const totalPercentage = (totalRawScore / 120) * 100;
+    const masteryLevel = determineMasteryLevel(totalPercentage);
 
-    console.log('🎯 === RESULTADO FINAL ===');
-    console.log(`Total preguntas procesadas: ${finalResult.questionCount}`);
-    console.log(`Raw score total: ${finalResult.totalRawScore} / 120`);
-    console.log(`Porcentaje final: ${finalResult.percentage.toFixed(1)}%`);
+    console.log('🎯 === RESULTADOS FINALES CORREGIDOS ===');
+    console.log(`🎯 Version: ${FORCE_CACHE_INVALIDATION}`);
+    console.log(`🎯 Raw Scores (${rawScores.length}):`, rawScores);
+    console.log(`🎯 Total Raw: ${totalRawScore} / 120`);
+    console.log(`🎯 Porcentaje: ${totalPercentage.toFixed(2)}%`);
+    console.log(`🎯 Dimensiones: [${dimensionPercentages.map(p => p.toFixed(1) + '%').join(', ')}]`);
 
-    return finalResult.result;
+    return {
+      dimensionScores: dimensionPercentages,
+      totalScore: totalPercentage,
+      masteryLevel,
+      rawScores: rawScores,
+      unmatchedAnswers: [],
+      debugInfo: {
+        version: FORCE_CACHE_INVALIDATION,
+        totalRawScore,
+        dimensionRawScores: dimensionScores,
+        evaluationQuestionsProcessed: evaluationAnswers.length,
+        firstQuestionExcluded: true
+      }
+    };
 
   } catch (error) {
     console.error('💥 ERROR EN PROCESS ANSWERS:', error);
@@ -185,65 +206,12 @@ function processAnswers(formResponse) {
       masteryLevel: determineMasteryLevel(0),
       rawScores: [],
       unmatchedAnswers: [],
-      debugInfo: { error: error.message }
+      debugInfo: { 
+        error: error.message,
+        version: FORCE_CACHE_INVALIDATION
+      }
     };
   }
-}
-
-function processWithStrategy(answersToProcess, formResponse, strategyName) {
-  console.log(`🔄 Procesando con ${strategyName}...`);
-  
-  const dimensionScores = [0, 0, 0, 0, 0, 0];
-  const rawScores = [];
-  
-  answersToProcess.forEach((answer, index) => {
-    const field = formResponse.definition.fields.find(f => f.id === answer.field.id);
-    let score = 1;
-    
-    if (field && field.choices) {
-      const choiceIndex = field.choices.findIndex(choice => 
-        choice.label === answer.choice.label
-      );
-      if (choiceIndex !== -1) {
-        score = choiceIndex + 1;
-      }
-    }
-    
-    rawScores.push(score);
-    
-    // Dividir en dimensiones solo si tenemos exactamente 24 preguntas
-    if (answersToProcess.length === 24) {
-      const dimensionIndex = Math.floor(index / 4);
-      if (dimensionIndex < 6) {
-        dimensionScores[dimensionIndex] += score;
-      }
-    }
-  });
-  
-  const totalRawScore = rawScores.reduce((sum, score) => sum + score, 0);
-  const percentage = (totalRawScore / 120) * 100;
-  const dimensionPercentages = dimensionScores.map(score => (score / 20) * 100);
-  const masteryLevel = determineMasteryLevel(percentage);
-  
-  return {
-    questionCount: answersToProcess.length,
-    totalRawScore,
-    percentage,
-    rawScores,
-    result: {
-      dimensionScores: dimensionPercentages,
-      totalScore: percentage,
-      masteryLevel,
-      rawScores,
-      unmatchedAnswers: [],
-      debugInfo: {
-        strategy: strategyName,
-        totalRawScore,
-        dimensionRawScores: dimensionScores,
-        questionCount: answersToProcess.length
-      }
-    }
-  };
 }
 
 function determineMasteryLevel(score) {
