@@ -207,7 +207,6 @@ const ResourceCard = ({ title, type, link, description }) => {
     </Card>
   );
 };
-
 // Componente para mostrar una dimensión con su puntuación
 const DimensionScore = ({ icon: Icon, title, score, description }) => {
   return (
@@ -507,7 +506,6 @@ function Results() {
 
     fetchResults();
   }, [searchParams]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
@@ -674,6 +672,28 @@ function Results() {
                   <h3 className="text-xl font-bold mb-4">Tus Fortalezas y Oportunidades</h3>
                   
                   <div className="grid md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardContent className="p-6">
+                        <h4 className="text-lg font-bold text-green-600 mb-3">Fortalezas</h4>
+                        <ul className="space-y-2">
+                          {results.dimensionScores.map((score, idx) => {
+                            if (score >= 70) {
+                              return (
+                                <li key={`strength-${idx}`} className="flex items-start gap-2">
+                                  <div className="mt-1 w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
+                                  <span><strong>{dimensionNames[idx]}</strong>: {score.toFixed(1)}%</span>
+                                </li>
+                              );
+                            }
+                            return null;
+                          })}
+                          {results.dimensionScores.filter(score => score >= 70).length === 0 && (
+                            <li className="text-gray-500 italic">Sigue trabajando en desarrollar tus capacidades. ¡Vas por buen camino!</li>
+                          )}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                    
                     <Card>
                       <CardContent className="p-6">
                         <h4 className="text-lg font-bold text-orange-600 mb-3">Oportunidades de Mejora</h4>
@@ -866,25 +886,3 @@ export default function ResultsPage() {
     </Suspense>
   );
 }
-                        <h4 className="text-lg font-bold text-green-600 mb-3">Fortalezas</h4>
-                        <ul className="space-y-2">
-                          {results.dimensionScores.map((score, idx) => {
-                            if (score >= 70) {
-                              return (
-                                <li key={`strength-${idx}`} className="flex items-start gap-2">
-                                  <div className="mt-1 w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
-                                  <span><strong>{dimensionNames[idx]}</strong>: {score.toFixed(1)}%</span>
-                                </li>
-                              );
-                            }
-                            return null;
-                          })}
-                          {results.dimensionScores.filter(score => score >= 70).length === 0 && (
-                            <li className="text-gray-500 italic">Sigue trabajando en desarrollar tus capacidades. ¡Vas por buen camino!</li>
-                          )}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-6">
