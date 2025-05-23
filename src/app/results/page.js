@@ -865,7 +865,8 @@ export default function ResultsPage() {
       <Results />
     </Suspense>
   );
-}d text-green-600 mb-3">Fortalezas</h4>
+}
+                        <h4 className="text-lg font-bold text-green-600 mb-3">Fortalezas</h4>
                         <ul className="space-y-2">
                           {results.dimensionScores.map((score, idx) => {
                             if (score >= 70) {
@@ -887,4 +888,3 @@ export default function ResultsPage() {
                     
                     <Card>
                       <CardContent className="p-6">
-                        <h4 className="text-lg font-bol
