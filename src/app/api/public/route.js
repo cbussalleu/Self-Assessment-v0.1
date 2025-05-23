@@ -7,7 +7,7 @@ export const runtime = 'edge';
 export async function POST(request) {
   try {
     const data = await request.json();
-    console.log('Webhook received data:', data);
+    console.log('🚀 WEBHOOK INICIADO - VERSIÓN CORREGIDA 2025-05-23');
     
     const formResponse = data.form_response;
     if (!formResponse) {
@@ -25,7 +25,11 @@ export async function POST(request) {
       recommendations
     };
 
-    console.log('Processed results:', results);
+    console.log('💾 GUARDANDO RESULTADOS:', {
+      totalScore: results.totalScore,
+      dimensionScores: results.dimensionScores,
+      masteryLevel: results.masteryLevel.level
+    });
 
     // Guardar en base de datos
     await createAssessmentResult(results);
@@ -39,7 +43,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('💥 ERROR:', error);
     return NextResponse.json({ 
       error: 'Error processing webhook',
       details: error.message
@@ -59,7 +63,6 @@ export async function GET(request) {
       }, { status: 400 });
     }
 
-    // Eventualmente esto se reemplazaría con: 
     const result = await getAssessmentResultByResponseId(response_id);
     
     console.log('Returning result:', result);
@@ -73,43 +76,56 @@ export async function GET(request) {
   }
 }
 
-// FUNCIÓN CORREGIDA - EXCLUYE LA PRIMERA PREGUNTA AUTOMÁTICAMENTE
+// 🔥 FUNCIÓN CORREGIDA CON DEBUG INTENSIVO
 function processAnswers(formResponse) {
   try {
-    console.log('Procesando respuestas con modelo corregido (excluyendo primera pregunta)...');
+    console.log('🔍 PROCESANDO RESPUESTAS - VERSIÓN CORREGIDA');
+    console.log('📊 Timestamp del proceso:', new Date().toISOString());
     
+    // Verificar si formResponse.answers existe
+    if (!formResponse.answers) {
+      console.error('❌ NO SE ENCONTRARON RESPUESTAS EN formResponse.answers');
+      console.log('formResponse keys:', Object.keys(formResponse));
+      throw new Error('No answers found in formResponse');
+    }
+
     // Filtrar solo las preguntas de opción múltiple
     const multipleChoiceAnswers = formResponse.answers.filter(answer => 
       answer && answer.type === 'choice'
     );
 
-    console.log(`Total respuestas recibidas: ${multipleChoiceAnswers.length}`);
-
-    // SOLUCIÓN: EXCLUIR AUTOMÁTICAMENTE LA PRIMERA PREGUNTA
-    // La primera pregunta es siempre introductoria y no debe sumar al puntaje
-    const evaluationAnswers = multipleChoiceAnswers.slice(1); // Excluir primera pregunta
+    console.log(`📝 RESPUESTAS RECIBIDAS: ${multipleChoiceAnswers.length}`);
     
-    console.log(`Respuestas de evaluación (sin primera pregunta): ${evaluationAnswers.length}`);
-    console.log(`Esperado: 24 preguntas de evaluación`);
+    // Log detallado de las primeras 3 respuestas
+    console.log('🔍 PRIMERAS 3 RESPUESTAS:');
+    multipleChoiceAnswers.slice(0, 3).forEach((answer, index) => {
+      console.log(`  ${index + 1}. Field: ${answer.field?.id}, Choice: "${answer.choice?.label}"`);
+    });
 
-    // Verificar que tenemos exactamente 24 preguntas de evaluación
+    // 🚨 EXCLUSIÓN CRÍTICA: PRIMERA PREGUNTA
+    console.log('⚠️ EXCLUYENDO PRIMERA PREGUNTA...');
+    const evaluationAnswers = multipleChoiceAnswers.slice(1); // ← CRÍTICO: Excluir primera
+    
+    console.log(`✅ RESPUESTAS DE EVALUACIÓN (SIN PRIMERA): ${evaluationAnswers.length}`);
+    console.log(`✅ ESPERADO: 24 preguntas de evaluación`);
+
     if (evaluationAnswers.length !== 24) {
-      console.warn(`⚠️ Se esperaban 24 preguntas de evaluación, pero se recibieron ${evaluationAnswers.length}`);
+      console.warn(`⚠️ ADVERTENCIA: Se esperaban 24 preguntas, recibidas ${evaluationAnswers.length}`);
     }
 
-    // Inicializar arrays para almacenar puntajes por dimensión
+    // Inicializar arrays
     const dimensionScores = [0, 0, 0, 0, 0, 0]; // 6 dimensiones
-    const dimensionQuestionCounts = [0, 0, 0, 0, 0, 0]; // Contador de preguntas por dimensión
+    const dimensionQuestionCounts = [0, 0, 0, 0, 0, 0];
     const processedAnswers = [];
-    const unmatchedAnswers = [];
     const rawScores = [];
 
-    // Procesar cada respuesta de evaluación (SIN la primera pregunta)
+    console.log('🔄 PROCESANDO CADA RESPUESTA DE EVALUACIÓN...');
+
+    // Procesar SOLO las respuestas de evaluación (sin primera pregunta)
     evaluationAnswers.forEach((answer, index) => {
       const responseText = answer.choice.label;
       
-      // Calcular puntaje usando el método original más confiable:
-      // Buscar en qué posición está la opción seleccionada dentro de las opciones de la pregunta
+      // Buscar el field correspondiente en la definición
       const field = formResponse.definition.fields.find(f => f.id === answer.field.id);
       
       let score = 1; // Valor por defecto
@@ -126,8 +142,7 @@ function processAnswers(formResponse) {
       
       rawScores.push(score);
       
-      // Calcular a qué dimensión pertenece esta pregunta
-      // Las 24 preguntas se dividen en 6 dimensiones de 4 preguntas cada una
+      // Calcular dimensión (0-5)
       const dimensionIndex = Math.floor(index / 4);
       
       if (dimensionIndex < 6) {
@@ -136,57 +151,57 @@ function processAnswers(formResponse) {
         
         processedAnswers.push({
           questionIndex: index,
-          response: responseText,
+          response: responseText.substring(0, 50) + '...',
           score: score,
           dimensionIndex: dimensionIndex
         });
+        
+        console.log(`  ${index + 1}. Dim${dimensionIndex + 1}, Score: ${score}`);
       } else {
         console.warn(`⚠️ Pregunta ${index + 1} fuera de rango de dimensiones`);
       }
     });
 
-    // Log de depuración
-    console.log('Raw scores (24 preguntas):', rawScores);
-    console.log('Respuestas procesadas:', processedAnswers.length);
-    console.log('Puntajes por dimensión (raw):', dimensionScores);
-    console.log('Preguntas por dimensión:', dimensionQuestionCounts);
-
-    // Calcular puntaje total
+    // 📊 CÁLCULOS FINALES
     const totalRawScore = dimensionScores.reduce((sum, score) => sum + score, 0);
-    
-    // Convertir a porcentajes (cada dimensión puede tener máximo 20 puntos)
     const dimensionPercentages = dimensionScores.map(score => (score / 20) * 100);
-    
-    // Puntaje total como porcentaje (máximo 120 puntos)
     const totalPercentage = (totalRawScore / 120) * 100;
-
-    // Determinar nivel de maestría
     const masteryLevel = determineMasteryLevel(totalPercentage);
 
-    console.log('=== RESULTADOS FINALES ===');
-    console.log('Puntaje total raw:', totalRawScore, '/ 120');
-    console.log('Puntaje total porcentaje:', totalPercentage.toFixed(1), '%');
-    console.log('Dimensiones en porcentaje:', dimensionPercentages.map(p => p.toFixed(1) + '%'));
-    console.log('Nivel de maestría:', masteryLevel.level, '-', masteryLevel.description);
+    console.log('🎯 RESULTADOS FINALES:');
+    console.log(`   📊 Raw Scores (${rawScores.length}):`, rawScores);
+    console.log(`   🔢 Total Raw: ${totalRawScore} / 120`);
+    console.log(`   📈 Porcentaje: ${totalPercentage.toFixed(1)}%`);
+    console.log(`   📋 Dimensiones: [${dimensionPercentages.map(p => p.toFixed(0) + '%').join(', ')}]`);
+    console.log(`   🏆 Nivel: ${masteryLevel.level} - ${masteryLevel.description}`);
+    
+    // Verificación crítica
+    if (rawScores.length !== 24) {
+      console.error(`❌ ERROR CRÍTICO: Se procesaron ${rawScores.length} preguntas en lugar de 24`);
+    }
+    
+    if (totalRawScore > 120) {
+      console.error(`❌ ERROR CRÍTICO: Total ${totalRawScore} excede máximo de 120`);
+    }
 
     return {
       dimensionScores: dimensionPercentages,
       totalScore: totalPercentage,
       masteryLevel,
       rawScores: rawScores,
-      unmatchedAnswers,
+      unmatchedAnswers: [],
       debugInfo: {
         totalRawScore,
         dimensionRawScores: dimensionScores,
         dimensionQuestionCounts,
         totalAnswersReceived: multipleChoiceAnswers.length,
         evaluationAnswersProcessed: evaluationAnswers.length,
-        firstQuestionExcluded: true
+        firstQuestionExcluded: true,
+        version: 'CORRECTED_2025_05_23'
       }
     };
   } catch (error) {
-    console.error('Error processing answers:', error);
-    // Devolver valores por defecto en caso de error
+    console.error('💥 ERROR EN PROCESS ANSWERS:', error);
     return {
       dimensionScores: [0, 0, 0, 0, 0, 0],
       totalScore: 0,
@@ -194,7 +209,8 @@ function processAnswers(formResponse) {
       rawScores: [],
       unmatchedAnswers: [],
       debugInfo: {
-        error: error.message
+        error: error.message,
+        version: 'ERROR_2025_05_23'
       }
     };
   }
