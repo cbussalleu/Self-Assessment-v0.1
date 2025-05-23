@@ -6,90 +6,167 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight, BookOpen, Download, ExternalLink, BarChart, Users, Brain, Code, Heart, Target } from 'lucide-react';
 
-// Radar chart para visualizar las dimensiones
+// Radar chart corregido para visualizar las dimensiones
 const RadarChart = ({ scores, labels }) => {
-  // Esta es una visualización simplificada usando transformaciones CSS
-  // Para un radar chart más sofisticado, se podría usar Recharts
-  
+  // Configuración del gráfico
+  const size = 400;
+  const center = size / 2;
+  const maxRadius = 140;
+  const levels = 5;
   const sides = scores.length;
-  const angle = (2 * Math.PI) / sides;
-  const center = 100;
-  const radius = 80;
+  
+  // Calcular ángulos para cada punto (empezando desde arriba)
+  const angleStep = (Math.PI * 2) / sides;
+  
+  // Generar puntos de datos
+  const dataPoints = scores.map((score, i) => {
+    const angle = i * angleStep - Math.PI / 2; // -90 grados para empezar arriba
+    const radius = (maxRadius * score) / 100;
+    return {
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle)
+    };
+  });
+  
+  // Generar puntos para las etiquetas
+  const labelPoints = labels.map((_, i) => {
+    const angle = i * angleStep - Math.PI / 2;
+    const radius = maxRadius + 60; // Más separado del gráfico
+    return {
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle),
+      angle: angle
+    };
+  });
   
   return (
-    <div className="w-full max-w-md mx-auto relative h-80">
-      {/* Círculo de fondo */}
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="w-40 h-40 rounded-full border-2 border-gray-200 opacity-30"></div>
-        <div className="w-64 h-64 rounded-full border-2 border-gray-200 opacity-30 absolute"></div>
-        <div className="w-80 h-80 rounded-full border-2 border-gray-200 opacity-30 absolute"></div>
+    <div className="flex justify-center items-center p-4">
+      <div className="relative" style={{ width: size + 120, height: size + 120 }}>
+        <svg 
+          width={size} 
+          height={size} 
+          className="absolute"
+          style={{ left: '60px', top: '60px' }}
+        >
+          {/* Círculos concéntricos */}
+          {Array.from({ length: levels }, (_, i) => {
+            const radius = (maxRadius * (i + 1)) / levels;
+            return (
+              <circle
+                key={`level-${i}`}
+                cx={center}
+                cy={center}
+                r={radius}
+                fill="none"
+                stroke="#e5e7eb"
+                strokeWidth="1"
+                opacity={0.6}
+              />
+            );
+          })}
+          
+          {/* Líneas radiales */}
+          {Array.from({ length: sides }, (_, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const endX = center + maxRadius * Math.cos(angle);
+            const endY = center + maxRadius * Math.sin(angle);
+            return (
+              <line
+                key={`axis-${i}`}
+                x1={center}
+                y1={center}
+                x2={endX}
+                y2={endY}
+                stroke="#d1d5db"
+                strokeWidth="1"
+                opacity={0.6}
+              />
+            );
+          })}
+          
+          {/* Etiquetas de valores (20%, 40%, 60%, 80%, 100%) */}
+          {Array.from({ length: levels }, (_, i) => {
+            const value = ((i + 1) * 20);
+            const radius = (maxRadius * (i + 1)) / levels;
+            return (
+              <text
+                key={`value-label-${i}`}
+                x={center + 5}
+                y={center - radius + 4}
+                className="text-xs fill-gray-500"
+                textAnchor="start"
+              >
+                {value}%
+              </text>
+            );
+          })}
+          
+          {/* Polígono de datos */}
+          <polygon
+            points={dataPoints.map(p => `${p.x},${p.y}`).join(' ')}
+            fill="rgba(37, 99, 235, 0.25)"
+            stroke="#2563eb"
+            strokeWidth="2"
+          />
+          
+          {/* Puntos de datos */}
+          {dataPoints.map((point, i) => (
+            <circle
+              key={`data-point-${i}`}
+              cx={point.x}
+              cy={point.y}
+              r="5"
+              fill="#2563eb"
+              stroke="white"
+              strokeWidth="2"
+            />
+          ))}
+        </svg>
+        
+        {/* Etiquetas de dimensiones */}
+        {labelPoints.map((point, i) => {
+          const label = labels[i];
+          const shortLabel = label.replace('Capacidades ', ''); // Acortar etiquetas
+          
+          return (
+            <div
+              key={`label-${i}`}
+              className="absolute text-xs font-semibold text-gray-700 text-center"
+              style={{
+                left: `${point.x + 60}px`,
+                top: `${point.y + 60}px`,
+                transform: 'translate(-50%, -50%)',
+                width: '80px',
+                lineHeight: '1.2'
+              }}
+            >
+              {shortLabel}
+            </div>
+          );
+        })}
+        
+        {/* Valores de puntuación cerca de cada punto */}
+        {dataPoints.map((point, i) => {
+          const score = scores[i];
+          const angle = i * angleStep - Math.PI / 2;
+          const offsetX = Math.cos(angle) * 20;
+          const offsetY = Math.sin(angle) * 20;
+          
+          return (
+            <div
+              key={`score-${i}`}
+              className="absolute text-sm font-bold text-blue-600 bg-white px-1 rounded"
+              style={{
+                left: `${point.x + 60 + offsetX}px`,
+                top: `${point.y + 60 + offsetY}px`,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              {score.toFixed(0)}%
+            </div>
+          );
+        })}
       </div>
-      
-      {/* Líneas de los ejes */}
-      {labels.map((_, i) => {
-        const x = center + radius * Math.sin(i * angle);
-        const y = center - radius * Math.cos(i * angle);
-        return (
-          <div key={`axis-${i}`} className="absolute top-0 left-0 h-0.5 bg-gray-300 origin-left"
-            style={{
-              width: `${radius}px`,
-              left: `${center}px`,
-              top: `${center}px`,
-              transform: `rotate(${i * (360 / sides)}deg)`
-            }}
-          ></div>
-        );
-      })}
-      
-      {/* Polígono del score */}
-      <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 200 200">
-        <polygon 
-          points={scores.map((score, i) => {
-            const percent = score / 100;
-            const x = center + radius * percent * Math.sin(i * angle);
-            const y = center - radius * percent * Math.cos(i * angle);
-            return `${x},${y}`;
-          }).join(' ')}
-          fill="rgba(30, 64, 175, 0.3)"
-          stroke="#0026df"
-          strokeWidth="2"
-        />
-      </svg>
-      
-      {/* Etiquetas */}
-      {labels.map((label, i) => {
-        const percent = 1.2; // Posición de la etiqueta más allá del radio
-        const x = center + radius * percent * Math.sin(i * angle);
-        const y = center - radius * percent * Math.cos(i * angle);
-        return (
-          <div key={`label-${i}`} className="absolute transform -translate-x-1/2 -translate-y-1/2 text-sm font-medium"
-            style={{
-              left: `${x}px`,
-              top: `${y}px`,
-              maxWidth: '80px',
-              textAlign: 'center'
-            }}
-          >
-            {label}
-          </div>
-        );
-      })}
-      
-      {/* Puntos de los scores */}
-      {scores.map((score, i) => {
-        const percent = score / 100;
-        const x = center + radius * percent * Math.sin(i * angle);
-        const y = center - radius * percent * Math.cos(i * angle);
-        return (
-          <div key={`point-${i}`} 
-            className="absolute w-3 h-3 bg-blue-600 rounded-full transform -translate-x-1/2 -translate-y-1/2"
-            style={{
-              left: `${x}px`,
-              top: `${y}px`,
-            }}
-          ></div>
-        );
-      })}
     </div>
   );
 };
@@ -599,28 +676,6 @@ function Results() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <Card>
                       <CardContent className="p-6">
-                        <h4 className="text-lg font-bold text-green-600 mb-3">Fortalezas</h4>
-                        <ul className="space-y-2">
-                          {results.dimensionScores.map((score, idx) => {
-                            if (score >= 70) {
-                              return (
-                                <li key={`strength-${idx}`} className="flex items-start gap-2">
-                                  <div className="mt-1 w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
-                                  <span><strong>{dimensionNames[idx]}</strong>: {score.toFixed(1)}%</span>
-                                </li>
-                              );
-                            }
-                            return null;
-                          })}
-                          {results.dimensionScores.filter(score => score >= 70).length === 0 && (
-                            <li className="text-gray-500 italic">Sigue trabajando en desarrollar tus capacidades. ¡Vas por buen camino!</li>
-                          )}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardContent className="p-6">
                         <h4 className="text-lg font-bold text-orange-600 mb-3">Oportunidades de Mejora</h4>
                         <ul className="space-y-2">
                           {results.dimensionScores.map((score, idx) => {
@@ -810,4 +865,26 @@ export default function ResultsPage() {
       <Results />
     </Suspense>
   );
-}
+}d text-green-600 mb-3">Fortalezas</h4>
+                        <ul className="space-y-2">
+                          {results.dimensionScores.map((score, idx) => {
+                            if (score >= 70) {
+                              return (
+                                <li key={`strength-${idx}`} className="flex items-start gap-2">
+                                  <div className="mt-1 w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
+                                  <span><strong>{dimensionNames[idx]}</strong>: {score.toFixed(1)}%</span>
+                                </li>
+                              );
+                            }
+                            return null;
+                          })}
+                          {results.dimensionScores.filter(score => score >= 70).length === 0 && (
+                            <li className="text-gray-500 italic">Sigue trabajando en desarrollar tus capacidades. ¡Vas por buen camino!</li>
+                          )}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="p-6">
+                        <h4 className="text-lg font-bol
