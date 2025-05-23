@@ -7,7 +7,7 @@ export const runtime = 'edge';
 export async function POST(request) {
   try {
     const data = await request.json();
-    console.log('🚀 WEBHOOK INICIADO - VERSIÓN CORREGIDA 2025-05-23');
+    console.log('🔥🔥🔥 ULTIMATE DEBUG VERSION - 2025-05-23 🔥🔥🔥');
     
     const formResponse = data.form_response;
     if (!formResponse) {
@@ -76,130 +76,107 @@ export async function GET(request) {
   }
 }
 
-// 🔥 FUNCIÓN CORREGIDA CON DEBUG INTENSIVO
 function processAnswers(formResponse) {
   try {
-    console.log('🔍 PROCESANDO RESPUESTAS - VERSIÓN CORREGIDA');
-    console.log('📊 Timestamp del proceso:', new Date().toISOString());
+    console.log('🔍 === ULTIMATE DEBUG: ANALIZANDO ESTRUCTURA COMPLETA ===');
     
-    // Verificar si formResponse.answers existe
+    // LOG COMPLETO DE LA ESTRUCTURA
+    console.log('📋 formResponse keys:', Object.keys(formResponse));
+    console.log('📋 formResponse.answers exists:', !!formResponse.answers);
+    console.log('📋 formResponse.answers type:', typeof formResponse.answers);
+    console.log('📋 formResponse.answers length:', formResponse.answers?.length);
+
     if (!formResponse.answers) {
-      console.error('❌ NO SE ENCONTRARON RESPUESTAS EN formResponse.answers');
-      console.log('formResponse keys:', Object.keys(formResponse));
+      console.error('❌ NO ANSWERS FOUND');
       throw new Error('No answers found in formResponse');
     }
 
-    // Filtrar solo las preguntas de opción múltiple
+    // LOG DETALLADO DE TODAS LAS RESPUESTAS
+    console.log('📝 === TODAS LAS RESPUESTAS RECIBIDAS ===');
+    formResponse.answers.forEach((answer, index) => {
+      console.log(`Respuesta ${index + 1}:`, {
+        type: answer.type,
+        fieldId: answer.field?.id,
+        fieldType: answer.field?.type,
+        choiceLabel: answer.choice?.label,
+        choiceId: answer.choice?.id,
+        textValue: answer.text,
+        numberValue: answer.number,
+        fullAnswer: JSON.stringify(answer, null, 2)
+      });
+    });
+
+    // Filtrar respuestas de opción múltiple
     const multipleChoiceAnswers = formResponse.answers.filter(answer => 
       answer && answer.type === 'choice'
     );
 
-    console.log(`📝 RESPUESTAS RECIBIDAS: ${multipleChoiceAnswers.length}`);
+    console.log('🎯 === RESPUESTAS DE OPCIÓN MÚLTIPLE ===');
+    console.log(`Total respuestas 'choice': ${multipleChoiceAnswers.length}`);
     
-    // Log detallado de las primeras 3 respuestas
-    console.log('🔍 PRIMERAS 3 RESPUESTAS:');
-    multipleChoiceAnswers.slice(0, 3).forEach((answer, index) => {
-      console.log(`  ${index + 1}. Field: ${answer.field?.id}, Choice: "${answer.choice?.label}"`);
+    multipleChoiceAnswers.forEach((answer, index) => {
+      console.log(`MC ${index + 1}:`, {
+        fieldId: answer.field?.id,
+        choiceLabel: answer.choice?.label,
+        choiceId: answer.choice?.id
+      });
     });
 
-    // 🚨 EXCLUSIÓN CRÍTICA: PRIMERA PREGUNTA
-    console.log('⚠️ EXCLUYENDO PRIMERA PREGUNTA...');
-    const evaluationAnswers = multipleChoiceAnswers.slice(1); // ← CRÍTICO: Excluir primera
-    
-    console.log(`✅ RESPUESTAS DE EVALUACIÓN (SIN PRIMERA): ${evaluationAnswers.length}`);
-    console.log(`✅ ESPERADO: 24 preguntas de evaluación`);
-
-    if (evaluationAnswers.length !== 24) {
-      console.warn(`⚠️ ADVERTENCIA: Se esperaban 24 preguntas, recibidas ${evaluationAnswers.length}`);
+    // Verificar si necesitamos excluir la primera
+    console.log('🚨 === ANÁLISIS DE LA PRIMERA RESPUESTA ===');
+    if (multipleChoiceAnswers.length > 0) {
+      const firstChoice = multipleChoiceAnswers[0];
+      console.log('Primera respuesta choice:', {
+        fieldId: firstChoice.field?.id,
+        choiceLabel: firstChoice.choice?.label,
+        isIntroQuestion: firstChoice.choice?.label?.includes('capacidades') || 
+                        firstChoice.choice?.label?.includes('curiosidad') ||
+                        firstChoice.choice?.label?.includes('selección')
+      });
     }
 
-    // Inicializar arrays
-    const dimensionScores = [0, 0, 0, 0, 0, 0]; // 6 dimensiones
-    const dimensionQuestionCounts = [0, 0, 0, 0, 0, 0];
-    const processedAnswers = [];
-    const rawScores = [];
-
-    console.log('🔄 PROCESANDO CADA RESPUESTA DE EVALUACIÓN...');
-
-    // Procesar SOLO las respuestas de evaluación (sin primera pregunta)
-    evaluationAnswers.forEach((answer, index) => {
-      const responseText = answer.choice.label;
-      
-      // Buscar el field correspondiente en la definición
-      const field = formResponse.definition.fields.find(f => f.id === answer.field.id);
-      
-      let score = 1; // Valor por defecto
-      
-      if (field && field.choices) {
-        const choiceIndex = field.choices.findIndex(choice => 
-          choice.label === answer.choice.label
-        );
-        
-        if (choiceIndex !== -1) {
-          score = choiceIndex + 1; // Convertir índice (0-4) a puntaje (1-5)
-        }
-      }
-      
-      rawScores.push(score);
-      
-      // Calcular dimensión (0-5)
-      const dimensionIndex = Math.floor(index / 4);
-      
-      if (dimensionIndex < 6) {
-        dimensionScores[dimensionIndex] += score;
-        dimensionQuestionCounts[dimensionIndex]++;
-        
-        processedAnswers.push({
-          questionIndex: index,
-          response: responseText.substring(0, 50) + '...',
-          score: score,
-          dimensionIndex: dimensionIndex
-        });
-        
-        console.log(`  ${index + 1}. Dim${dimensionIndex + 1}, Score: ${score}`);
-      } else {
-        console.warn(`⚠️ Pregunta ${index + 1} fuera de rango de dimensiones`);
-      }
+    // Procesar con diferentes estrategias para comparar
+    console.log('🔬 === PROCESANDO CON DIFERENTES ESTRATEGIAS ===');
+    
+    // Estrategia 1: Incluir todas las respuestas choice
+    const strategy1Result = processWithStrategy(multipleChoiceAnswers, formResponse, 'INCLUIR_TODAS');
+    
+    // Estrategia 2: Excluir la primera respuesta choice
+    const strategy2Result = processWithStrategy(multipleChoiceAnswers.slice(1), formResponse, 'EXCLUIR_PRIMERA');
+    
+    console.log('📊 === COMPARACIÓN DE RESULTADOS ===');
+    console.log('Estrategia 1 (incluir todas):', {
+      totalQuestions: strategy1Result.questionCount,
+      totalRawScore: strategy1Result.totalRawScore,
+      percentage: strategy1Result.percentage.toFixed(1) + '%'
+    });
+    
+    console.log('Estrategia 2 (excluir primera):', {
+      totalQuestions: strategy2Result.questionCount,
+      totalRawScore: strategy2Result.totalRawScore,
+      percentage: strategy2Result.percentage.toFixed(1) + '%'
     });
 
-    // 📊 CÁLCULOS FINALES
-    const totalRawScore = dimensionScores.reduce((sum, score) => sum + score, 0);
-    const dimensionPercentages = dimensionScores.map(score => (score / 20) * 100);
-    const totalPercentage = (totalRawScore / 120) * 100;
-    const masteryLevel = determineMasteryLevel(totalPercentage);
-
-    console.log('🎯 RESULTADOS FINALES:');
-    console.log(`   📊 Raw Scores (${rawScores.length}):`, rawScores);
-    console.log(`   🔢 Total Raw: ${totalRawScore} / 120`);
-    console.log(`   📈 Porcentaje: ${totalPercentage.toFixed(1)}%`);
-    console.log(`   📋 Dimensiones: [${dimensionPercentages.map(p => p.toFixed(0) + '%').join(', ')}]`);
-    console.log(`   🏆 Nivel: ${masteryLevel.level} - ${masteryLevel.description}`);
-    
-    // Verificación crítica
-    if (rawScores.length !== 24) {
-      console.error(`❌ ERROR CRÍTICO: Se procesaron ${rawScores.length} preguntas en lugar de 24`);
-    }
-    
-    if (totalRawScore > 120) {
-      console.error(`❌ ERROR CRÍTICO: Total ${totalRawScore} excede máximo de 120`);
+    // Decidir cuál usar basado en el número de preguntas
+    let finalResult;
+    if (strategy2Result.questionCount === 24) {
+      console.log('✅ USANDO ESTRATEGIA 2 (excluir primera) - 24 preguntas ✅');
+      finalResult = strategy2Result;
+    } else if (strategy1Result.questionCount === 24) {
+      console.log('✅ USANDO ESTRATEGIA 1 (incluir todas) - 24 preguntas ✅');
+      finalResult = strategy1Result;
+    } else {
+      console.log('⚠️ NINGUNA ESTRATEGIA DA 24 PREGUNTAS, USANDO ESTRATEGIA 2');
+      finalResult = strategy2Result;
     }
 
-    return {
-      dimensionScores: dimensionPercentages,
-      totalScore: totalPercentage,
-      masteryLevel,
-      rawScores: rawScores,
-      unmatchedAnswers: [],
-      debugInfo: {
-        totalRawScore,
-        dimensionRawScores: dimensionScores,
-        dimensionQuestionCounts,
-        totalAnswersReceived: multipleChoiceAnswers.length,
-        evaluationAnswersProcessed: evaluationAnswers.length,
-        firstQuestionExcluded: true,
-        version: 'CORRECTED_2025_05_23'
-      }
-    };
+    console.log('🎯 === RESULTADO FINAL ===');
+    console.log(`Total preguntas procesadas: ${finalResult.questionCount}`);
+    console.log(`Raw score total: ${finalResult.totalRawScore} / 120`);
+    console.log(`Porcentaje final: ${finalResult.percentage.toFixed(1)}%`);
+
+    return finalResult.result;
+
   } catch (error) {
     console.error('💥 ERROR EN PROCESS ANSWERS:', error);
     return {
@@ -208,12 +185,65 @@ function processAnswers(formResponse) {
       masteryLevel: determineMasteryLevel(0),
       rawScores: [],
       unmatchedAnswers: [],
-      debugInfo: {
-        error: error.message,
-        version: 'ERROR_2025_05_23'
-      }
+      debugInfo: { error: error.message }
     };
   }
+}
+
+function processWithStrategy(answersToProcess, formResponse, strategyName) {
+  console.log(`🔄 Procesando con ${strategyName}...`);
+  
+  const dimensionScores = [0, 0, 0, 0, 0, 0];
+  const rawScores = [];
+  
+  answersToProcess.forEach((answer, index) => {
+    const field = formResponse.definition.fields.find(f => f.id === answer.field.id);
+    let score = 1;
+    
+    if (field && field.choices) {
+      const choiceIndex = field.choices.findIndex(choice => 
+        choice.label === answer.choice.label
+      );
+      if (choiceIndex !== -1) {
+        score = choiceIndex + 1;
+      }
+    }
+    
+    rawScores.push(score);
+    
+    // Dividir en dimensiones solo si tenemos exactamente 24 preguntas
+    if (answersToProcess.length === 24) {
+      const dimensionIndex = Math.floor(index / 4);
+      if (dimensionIndex < 6) {
+        dimensionScores[dimensionIndex] += score;
+      }
+    }
+  });
+  
+  const totalRawScore = rawScores.reduce((sum, score) => sum + score, 0);
+  const percentage = (totalRawScore / 120) * 100;
+  const dimensionPercentages = dimensionScores.map(score => (score / 20) * 100);
+  const masteryLevel = determineMasteryLevel(percentage);
+  
+  return {
+    questionCount: answersToProcess.length,
+    totalRawScore,
+    percentage,
+    rawScores,
+    result: {
+      dimensionScores: dimensionPercentages,
+      totalScore: percentage,
+      masteryLevel,
+      rawScores,
+      unmatchedAnswers: [],
+      debugInfo: {
+        strategy: strategyName,
+        totalRawScore,
+        dimensionRawScores: dimensionScores,
+        questionCount: answersToProcess.length
+      }
+    }
+  };
 }
 
 function determineMasteryLevel(score) {
